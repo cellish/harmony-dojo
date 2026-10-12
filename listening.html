@@ -53,7 +53,19 @@ button.primary{background:var(--brass);border-color:var(--brass);color:#fff;font
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.primary{color:#1B1408}}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 button:disabled{opacity:.45;cursor:default}
-.play{min-width:9em}
+/* 操作ボタン4つは常に1行に並べる */
+.actions{display:flex;gap:8px}
+.actions .btn{flex:1 1 0;min-width:0;white-space:nowrap;padding-inline:6px}
+.opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:-6px}
+.opts .chips{margin-top:0;gap:6px}
+.opts .chip{font-size:13px;padding:4px 10px}
+.tonegrp{display:flex;align-items:center;gap:8px;padding-left:14px;border-left:1px solid var(--line)}
+@media (max-width:420px){
+  .bench{padding:16px 12px}
+  .actions{gap:6px}
+  .actions .btn{font-size:13px;padding-inline:2px}
+  .tonegrp{padding-left:0;border-left:0}
+}
 .knob{display:flex;flex-direction:column;gap:10px}
 input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .nudges{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
@@ -141,7 +153,17 @@ section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:
   </div>
 
   <div>
-    <div class="label">音程を選ぶ</div>
+    <div class="label">出題のしかた</div>
+    <div class="chips" id="picks">
+      <button class="chip" type="button" id="pick-fixed" aria-pressed="true">選んだ音程</button>
+      <button class="chip" type="button" id="pick-random" aria-pressed="false">ランダム</button>
+      <button class="chip" type="button" id="pick-weak" aria-pressed="false">苦手を重点</button>
+    </div>
+    <p class="note" id="pickNote" style="margin-top:6px"></p>
+  </div>
+
+  <div>
+    <div class="label" id="ivLabel">音程を選ぶ</div>
     <div class="ivcard">
       <div class="ivread"><span class="nm" id="ivName">長3度</span><span class="ab" id="ivAb">M3</span><span class="rt" id="ivRatio">5:4</span><span class="st" id="ivSemi">半音 4 個</span></div>
       <div class="ivtrack" id="ivTrack"><div class="line"></div><div class="fill" id="ivFill"></div>
@@ -174,25 +196,25 @@ section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:
       <div class="meta" id="qmeta"></div>
     </div>
 
-    <div class="row">
+    <div class="actions">
       <button class="btn primary play" id="play">▶ 鳴らす</button>
+      <button class="btn primary" id="submit">ここで決定</button>
+      <button class="btn" id="retry" title="動かす音を出題時の位置に戻す">やり直し</button>
       <button class="btn" id="newq">別の問題</button>
     </div>
-    <div class="chips" id="voices" style="margin-top:-6px">
-      <button class="chip" type="button" id="voice-both" aria-pressed="true">2音</button>
-      <button class="chip" type="button" id="voice-ref" aria-pressed="false">基準音のみ</button>
-      <button class="chip" type="button" id="voice-move" aria-pressed="false">動かす音のみ</button>
+    <div class="opts">
+      <div class="chips" id="voices">
+        <button class="chip" type="button" id="voice-both" aria-pressed="true">2音</button>
+        <button class="chip" type="button" id="voice-ref" aria-pressed="false">基準音のみ</button>
+        <button class="chip" type="button" id="voice-move" aria-pressed="false">動かす音のみ</button>
+      </div>
+      <div class="tonegrp"><span class="label">音色</span><div class="chips" id="tones"></div></div>
     </div>
-    <div class="row" style="margin-top:-6px"><span class="label">音色</span><div class="chips" id="tones" style="margin-top:0"></div></div>
 
     <div class="knob">
       <div class="label" id="knobLabel">上の音を調整</div>
       <input type="range" id="slider" min="-40" max="40" step="0.1" value="0" aria-label="動かす音の高さ">
       <div class="nudges" id="nudges"></div>
-    </div>
-
-    <div class="row">
-      <button class="btn primary" id="submit">ここで決定</button>
     </div>
 
     <div class="hintbox">
@@ -217,8 +239,6 @@ section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:
         <button class="btn" id="hearEt">平均律で聴く</button>
         <button class="btn" id="hearPyth">ピタゴラスで聴く</button>
         <button class="btn" id="hearMine">自分の答えで聴く</button>
-        <button class="btn" id="retry">やり直し</button>
-        <button class="btn primary" id="next">次の問題</button>
       </div>
       <p class="note" id="explain"></p>
     </div>
@@ -227,6 +247,16 @@ section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:
   <section>
     <h2>最近の記録</h2>
     <div class="hist" id="hist"></div>
+  </section>
+
+  <section>
+    <h2>音程別の成績</h2>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>音程</th><th class="n">回数</th><th class="n">最近の誤差</th><th class="n">重点出題の確率</th></tr></thead>
+      <tbody id="stats"></tbody>
+    </table></div>
+    <p class="note" style="margin-top:10px">各問題の最初の「決定」だけを記録します(やり直し後は数えません)。「最近の誤差」は新しい結果ほど重く見た平均です。「苦手を重点」では誤差の大きい音程と、まだ解いていない音程が多めに出ます。</p>
+    <div class="row" style="margin-top:8px"><button class="btn" id="resetStats">成績を消去</button></div>
   </section>
 
   <section>
@@ -297,6 +327,7 @@ INTERVALS.forEach((iv,i)=>{
 });
 function selectIv(i){
   i=Math.max(0,Math.min(NIV-1,i));
+  if(pick!=='fixed') setPick('fixed');   // 自分で選んだら「選んだ音程」の出題に戻す
   if(INTERVALS[i]===baseIv) return;
   baseIv=INTERVALS[i]; newQuestion();
 }
@@ -328,7 +359,7 @@ ivKnob.addEventListener('keydown',e=>{
 });
 $('ivDown').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)-1);
 $('ivUp').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)+1);
-[0,1,2].forEach(k=>{ $('oct-'+k).onclick=()=>{oct=k; newQuestion();}; });
+[0,1,2].forEach(k=>{ $('oct-'+k).onclick=()=>{oct=k; newQuestion(false);}; });
 [-5,-1,-0.2,-0.1,0.1,0.2,1,5].forEach(d=>{
   const b=document.createElement('button');
   b.className='btn'; b.type='button';
@@ -338,7 +369,7 @@ $('ivUp').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)+1);
   $('nudges').appendChild(b);
 });
 ['upper','lower'].forEach(m=>{
-  $('mode-'+m).onclick=()=>{mode=m; newQuestion();};
+  $('mode-'+m).onclick=()=>{mode=m; newQuestion(false);};
 });
 const sg=v=>(v>0.05?'+':v<-0.05?'':'±')+v.toFixed(1);
 $('tbl').innerHTML=INTERVALS.map(iv=>`<tr><td>${iv.name}${iv.sub?'('+iv.sub+')':''}</td><td>${iv.p}:${iv.q}</td><td class="n">${sg(iv.dev)}</td><td>${iv.pp}:${iv.pq}</td><td class="n">${sg(iv.pdev)}</td></tr>`).join('');
@@ -464,7 +495,30 @@ function noteLabel(){
     ? `基準音(下)${ref.n} ${ref.f.toFixed(1)} Hz・上の音を動かす・比 ${cur.p}:${cur.q}`
     : `基準音(上)${ref.n} ${ref.f.toFixed(1)} Hz・下の音を動かす・比 ${cur.p}:${cur.q}`;
 }
-function newQuestion(){
+/* 出題のしかた: fixed=選んだ音程 / random=均等にランダム / weak=苦手な音程ほど多く */
+const PICKS=['fixed','random','weak'];
+let pick='fixed', scored=false;
+try{const p=localStorage.getItem('unari-pick'); if(PICKS.includes(p)) pick=p;}catch(e){}
+function setPick(p){
+  pick=p; try{localStorage.setItem('unari-pick',p);}catch(e){}
+  PICKS.forEach(q=>$('pick-'+q).setAttribute('aria-pressed',q===pick));
+  $('ivLabel').textContent=pick==='fixed'?'音程を選ぶ':'出題中の音程(目盛りを押すと「選んだ音程」に戻ります)';
+  $('pickNote').textContent=pick==='fixed'?'下の目盛りで選んだ音程を出題します。'
+    :pick==='random'?'12種類の音程から均等に選んで出題します。':'音程別の成績をもとに、誤差の大きい音程やまだ解いていない音程を多めに出題します。';
+  renderStats();
+}
+PICKS.forEach(p=>{ $('pick-'+p).onclick=()=>{ if(p===pick) return; setPick(p); if(p!=='fixed') newQuestion(); }; });
+// 音程を重み付きで選ぶ。直前と同じ音程は出にくくする
+function weightOf(iv){ return pick==='weak'?weakWeight(iv):1; }
+function drawIv(){
+  const ws=INTERVALS.map(iv=>weightOf(iv)*(iv===baseIv?0.15:1));
+  let r=Math.random()*ws.reduce((a,b)=>a+b,0);
+  for(let i=0;i<NIV;i++){ r-=ws[i]; if(r<0) return INTERVALS[i]; }
+  return INTERVALS[NIV-1];
+}
+function newQuestion(reroll=true){
+  if(reroll&&pick!=='fixed') baseIv=drawIv();
+  scored=false;
   cur=derive(baseIv,oct);
   const pool=mode==='upper'?LOW_REFS:HIGH_REFS;
   refRaw=pool[Math.floor(Math.random()*pool.length)];
@@ -479,6 +533,7 @@ function newQuestion(){
   $('knobLabel').textContent=mode==='upper'?'上の音を調整':'下の音を調整';
   $('qname').textContent=cur.full;
   $('qmeta').textContent=noteLabel();
+  renderStats();
   beginAttempt();
 }
 function beginAttempt(){
@@ -486,8 +541,7 @@ function beginAttempt(){
   $('result').hidden=true; $('submit').disabled=false;
   setOffset(startOffset);
 }
-$('newq').onclick=newQuestion;
-$('next').onclick=newQuestion;
+$('newq').onclick=()=>newQuestion();
 $('retry').onclick=beginAttempt;
 
 function verdictOf(e){
@@ -513,6 +567,7 @@ $('submit').onclick=()=>{
     : ` ピタゴラス音律(${cur.pp}:${cur.pq})では、平均律より ${Math.abs(pt).toFixed(1)} セント${pt<0?'低く':'高く'}なり、純正とは ${Math.abs(pt-t).toFixed(1)} セント違います。`;
   $('result').hidden=false;
   saveHist({iv:cur.name,mode,ref:ref.n,err:+err.toFixed(1),t:Date.now()});
+  if(!scored){ scored=true; addStat(baseIv,err); }
 };
 $('hearJust').onclick=()=>{setOffset(target()); if(!playing) startAudio();};
 $('hearEt').onclick=()=>{setOffset(0); if(!playing) startAudio();};
@@ -585,6 +640,31 @@ function renderHist(){
     hist.map(r=>`<div><span>${r.iv}・${r.mode==='lower'?'下':'上'}を動かす(${r.ref||r.base})</span><span>${r.err>0?'+':''}${r.err.toFixed(1)}</span></div>`).join('');
 }
 
+/* ---------- 音程別の成績(苦手を重点で使う) ----------
+   音程(オクターヴを足す前の m2〜P8)ごとに、回数 n と誤差の絶対値の指数移動平均 e を持つ。 */
+const STATS_KEY='unari-stats';
+let stats={};
+try{stats=JSON.parse(localStorage.getItem(STATS_KEY)||'{}')||{};}catch(e){stats={};}
+function addStat(iv,err){
+  const a=Math.abs(err), s=stats[iv.id];
+  stats[iv.id]=s&&s.n?{n:s.n+1, e:+(0.7*s.e+0.3*a).toFixed(2)}:{n:1, e:+a.toFixed(2)};
+  try{localStorage.setItem(STATS_KEY,JSON.stringify(stats));}catch(e){}
+  renderStats();
+}
+// 誤差 1 cent → 約0.8、6 cent → 2.5、15 cent 以上 → 5.5。未回答は 3(誤差 7.5 cent 相当)
+function weakWeight(iv){ const s=stats[iv.id]; return s&&s.n?0.5+Math.min(s.e,15)/3:3; }
+function renderStats(){
+  const tot=INTERVALS.reduce((a,iv)=>a+weakWeight(iv),0);
+  $('stats').innerHTML=INTERVALS.map(iv=>{
+    const s=stats[iv.id], pr=weakWeight(iv)/tot*100;
+    return `<tr${iv===baseIv&&pick!=='fixed'?' style="font-weight:700"':''}><td>${iv.name}(${iv.id})</td><td class="n">${s?s.n:'—'}</td><td class="n">${s?s.e.toFixed(1)+' cent':'—'}</td><td class="n">${pr.toFixed(0)}%</td></tr>`;
+  }).join('');
+}
+$('resetStats').onclick=()=>{
+  if(!confirm('音程別の成績を消去しますか?')) return;
+  stats={}; try{localStorage.removeItem(STATS_KEY);}catch(e){} renderStats();
+};
+
 
 /* ---------- 基準ピッチ(A4)。両ページ共通の設定として保存 ---------- */
 const A4_KEY='jit-a4';
@@ -611,7 +691,7 @@ $('a4down').onclick=()=>setA4(A4-0.5);
 $('a4up').onclick=()=>setA4(A4+0.5);
 function onA4Change(){ applyA4(); $('qmeta').textContent=noteLabel(); refreshAudio(); updateBeat(); }
 setA4(A4);
-renderHist(); newQuestion();
+renderHist(); setPick(pick); newQuestion();
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type==='range') return;
   if(e.target===ivKnob) return;   // つまみを選んでいるときの ← → は音程の選択に使う
