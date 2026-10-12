@@ -35,7 +35,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 .wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:flex;flex-direction:column;gap:20px}
 header h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,6vw,40px);margin:0;letter-spacing:.04em;text-wrap:balance}
 header .en{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--muted);margin-top:2px}
-header p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+header p{margin:4px 0 0;color:var(--muted)}
 .label{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .chip{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
@@ -91,7 +91,28 @@ th.n{text-align:right}
 .hist .empty{color:var(--muted);font-family:var(--body);border:0}
 section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:600}
 
-.pitchbox{display:flex;flex-direction:column;gap:6px}
+/* 設定ボタンと、押すと開く設定画面(スマホでは下から出るシート) */
+.pickhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pickhead .btn{padding:4px 12px;font-size:14px;flex:none}
+.setbox{display:flex;align-items:center;gap:10px;min-width:0}
+.pickhead .label{white-space:nowrap}
+.setsum span{white-space:nowrap}
+.setsum{font-size:12px;color:var(--muted);font-family:var(--mono);text-align:right;line-height:1.4}
+dialog#settingsDlg{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--bg);color:var(--ink);
+  width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto}
+dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
+.dlghead{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.dlghead h2{margin:0;font-family:var(--display);font-size:20px;font-weight:600}
+.dlgbody{display:flex;flex-direction:column;gap:12px;padding:16px}
+.group{margin:0;min-width:0;border:1px solid var(--line);border-radius:14px;padding:12px 16px 16px;background:var(--panel)}
+.group legend{padding:0 6px;margin-left:-6px;font-family:var(--display);font-weight:600;font-size:16px}
+.group legend span{font-family:var(--body);font-size:12px;font-weight:400;color:var(--muted);margin-left:10px}
+.group .chips{margin-top:4px}
+@media (max-width:480px){
+  dialog#settingsDlg{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:16px 16px 0 0;border-bottom:0;max-height:88dvh}
+  .dlgbody{padding:12px}
+  .group{padding-inline:12px}
+}
 .pitchrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pitchrow input{font:inherit;font-family:var(--mono);width:6.5em;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-align:right}
 .pitchrow .hzunit{font-family:var(--mono);color:var(--muted);margin-left:-4px}
@@ -141,25 +162,16 @@ section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:
   </header>
 
 
-  <div class="pitchbox">
-    <label class="label" for="a4">基準ピッチ(A4)</label>
-    <div class="pitchrow">
-      <button class="btn" type="button" id="a4down" aria-label="0.5 Hz 下げる">−</button>
-      <input type="number" id="a4" min="400" max="480" step="0.5" value="440" inputmode="decimal">
-      <span class="hzunit">Hz</span>
-      <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる">+</button>
-      <div class="chips" id="a4presets"></div>
-    </div>
-  </div>
-
   <div>
-    <div class="label">出題のしかた</div>
+    <div class="pickhead"><div class="label">出題のしかた</div>
+      <div class="setbox"><span class="setsum" id="setSum"></span>
+        <button class="btn" type="button" id="openSettings" aria-haspopup="dialog">⚙ 設定</button></div></div>
     <div class="chips" id="picks">
       <button class="chip" type="button" id="pick-fixed" aria-pressed="true">選んだ音程</button>
       <button class="chip" type="button" id="pick-random" aria-pressed="false">ランダム</button>
       <button class="chip" type="button" id="pick-weak" aria-pressed="false">苦手を重点</button>
     </div>
-    <p class="note" id="pickNote" style="margin-top:6px"></p>
+    <p class="note" id="pickNote" style="margin-top:6px;max-width:none"></p>
   </div>
 
   <div>
@@ -173,22 +185,39 @@ section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:
     </div>
   </div>
 
-  <div>
-    <div class="label">音域の広さ</div>
-    <div class="chips" id="octs">
-      <button class="chip" type="button" id="oct-0" aria-pressed="true">1オクターヴ以内</button>
-      <button class="chip" type="button" id="oct-1" aria-pressed="false">+1オクターヴ</button>
-      <button class="chip" type="button" id="oct-2" aria-pressed="false">+2オクターヴ</button>
-    </div>
-  </div>
+  <!-- 一度決めたらあまり触らない設定はここにまとめる -->
+  <dialog id="settingsDlg" aria-labelledby="dlgTitle">
+    <div class="dlghead"><h2 id="dlgTitle">設定</h2><button class="btn" type="button" id="closeSettings">閉じる</button></div>
+    <div class="dlgbody">
+      <fieldset class="group">
+        <legend>基準ピッチ<span>「歌う」ページと共通</span></legend>
+        <div class="pitchrow">
+          <button class="btn" type="button" id="a4down" aria-label="0.5 Hz 下げる">−</button>
+          <input type="number" id="a4" min="400" max="480" step="0.5" value="440" inputmode="decimal" aria-label="基準ピッチ(A4)">
+          <span class="hzunit">Hz</span>
+          <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる">+</button>
+          <div class="chips" id="a4presets"></div>
+        </div>
+      </fieldset>
 
-  <div>
-    <div class="label">動かす音</div>
-    <div class="chips" id="modes">
-      <button class="chip" type="button" id="mode-upper" aria-pressed="true">上の音を動かす</button>
-      <button class="chip" type="button" id="mode-lower" aria-pressed="false">下の音を動かす</button>
+      <fieldset class="group">
+        <legend>音域の広さ<span>音程にオクターヴを足して出題</span></legend>
+        <div class="chips" id="octs">
+          <button class="chip" type="button" id="oct-0" aria-pressed="true">1オクターヴ以内</button>
+          <button class="chip" type="button" id="oct-1" aria-pressed="false">+1オクターヴ</button>
+          <button class="chip" type="button" id="oct-2" aria-pressed="false">+2オクターヴ</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>動かす音<span>もう一方は基準音として固定</span></legend>
+        <div class="chips" id="modes">
+          <button class="chip" type="button" id="mode-upper" aria-pressed="true">上の音を動かす</button>
+          <button class="chip" type="button" id="mode-lower" aria-pressed="false">下の音を動かす</button>
+        </div>
+      </fieldset>
     </div>
-  </div>
+  </dialog>
 
   <div class="bench">
     <div class="q">
@@ -301,6 +330,8 @@ const $=id=>document.getElementById(id);
 let baseIv=INTERVALS[2], oct=0, cur=derive(baseIv,0), refRaw=LOW_REFS[1], ref=LOW_REFS[1], mode='upper';
 // A4=440 のときの周波数 refRaw を、選んだ基準ピッチに合わせて換算する
 function applyA4(){ ref={n:refRaw.n, f:refRaw.f*A4/440}; }
+try{const o=+localStorage.getItem('unari-oct'), m=localStorage.getItem('unari-mode');
+  if([0,1,2].includes(o)) oct=o; if(m==='upper'||m==='lower') mode=m;}catch(e){}
 let offset=0, startOffset=0, mine=0, answered=false, voice='both';
 let ctx=null, oscL=null, oscU=null, gL=null, gU=null, master=null, playing=false;
 
@@ -359,7 +390,7 @@ ivKnob.addEventListener('keydown',e=>{
 });
 $('ivDown').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)-1);
 $('ivUp').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)+1);
-[0,1,2].forEach(k=>{ $('oct-'+k).onclick=()=>{oct=k; newQuestion(false);}; });
+[0,1,2].forEach(k=>{ $('oct-'+k).onclick=()=>{oct=k; try{localStorage.setItem('unari-oct',k);}catch(e){} newQuestion(false);}; });
 [-5,-1,-0.2,-0.1,0.1,0.2,1,5].forEach(d=>{
   const b=document.createElement('button');
   b.className='btn'; b.type='button';
@@ -369,7 +400,7 @@ $('ivUp').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)+1);
   $('nudges').appendChild(b);
 });
 ['upper','lower'].forEach(m=>{
-  $('mode-'+m).onclick=()=>{mode=m; newQuestion(false);};
+  $('mode-'+m).onclick=()=>{mode=m; try{localStorage.setItem('unari-mode',m);}catch(e){} newQuestion(false);};
 });
 const sg=v=>(v>0.05?'+':v<-0.05?'':'±')+v.toFixed(1);
 $('tbl').innerHTML=INTERVALS.map(iv=>`<tr><td>${iv.name}${iv.sub?'('+iv.sub+')':''}</td><td>${iv.p}:${iv.q}</td><td class="n">${sg(iv.dev)}</td><td>${iv.pp}:${iv.pq}</td><td class="n">${sg(iv.pdev)}</td></tr>`).join('');
@@ -689,9 +720,21 @@ $('a4').addEventListener('input',e=>{const v=parseFloat(e.target.value); if(v>=4
 $('a4').addEventListener('change',e=>setA4(parseFloat(e.target.value)||440));
 $('a4down').onclick=()=>setA4(A4-0.5);
 $('a4up').onclick=()=>setA4(A4+0.5);
-function onA4Change(){ applyA4(); $('qmeta').textContent=noteLabel(); refreshAudio(); updateBeat(); }
+function onA4Change(){ applyA4(); $('qmeta').textContent=noteLabel(); refreshAudio(); updateBeat(); updateSummary(); }
 setA4(A4);
-renderHist(); setPick(pick); newQuestion();
+/* ---------- 設定画面 ---------- */
+const dlg=$('settingsDlg');
+// 設定ボタンの横に、隠れている設定の今の値を出す
+function updateSummary(){
+  // 項目の途中では改行しない(スマホでは「・」の位置で折り返す)
+  $('setSum').innerHTML=[`A4=${A4}`, $('oct-'+oct).textContent, mode==='upper'?'上を動かす':'下を動かす'].map(t=>`<span>${t}</span>`).join('・');
+}
+$('openSettings').onclick=()=>{ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); };
+$('closeSettings').onclick=()=>dlg.close?dlg.close():dlg.removeAttribute('open');
+dlg.addEventListener('click',e=>{ if(e.target===dlg) dlg.close(); updateSummary(); });   // 背景を押しても閉じる
+dlg.addEventListener('close',()=>$('openSettings').focus());
+
+renderHist(); setPick(pick); newQuestion(); updateSummary();
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type==='range') return;
   if(e.target===ivKnob) return;   // つまみを選んでいるときの ← → は音程の選択に使う
