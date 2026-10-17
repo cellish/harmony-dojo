@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Harmony Dojo",
+  "short_name": "Harmony Dojo",
+  "description": "Practice just intonation: tune intervals by listening for beats, and sing or play along with a drone",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EEF1F4",
+  "theme_color": "#EEF1F4",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Listen", "url": "listening.html" },
+    { "name": "Sing", "url": "singing.html" }
+  ]
+}
