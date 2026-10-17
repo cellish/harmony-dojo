@@ -2,7 +2,7 @@
    方針: ネットにつながっていれば常に最新版を取りに行き(ネットワーク優先)、
    つながらないときだけ端末に保存した版を使う。更新は push するだけで反映される。 */
 const CACHE = 'harmony-dojo-v1';
-const CORE = ['./', 'index.html', 'listening.html', 'singing.html', 'manifest.webmanifest',
+const CORE = ['./', 'index.html', 'listening.html', 'singing.html', 'prefs.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
