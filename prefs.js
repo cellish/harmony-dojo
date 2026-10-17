@@ -7,6 +7,7 @@
    - 属性: data-en-title / data-en-aria-label / data-en-placeholder
    - JS で作る文言: tr('日本語','English') で選び、onLang(fn) で言語が変わったときに書き直す
    - ページのスクリプトの最初で applyLang() を呼ぶ(切替ボタンもここで上部に置く)
+   - ホーム画面に追加するときのアプリ名も言語に合わせる(manifest を切り替え、iPhone 用の名前も書き換える)
 
    テーマ
    - auto はシステムの設定に従う。light / dark は <html data-theme="..."> を付け、各ページの CSS が色を切り替える
@@ -81,8 +82,15 @@
     bar.querySelector('.theme').setAttribute('aria-label',tr('テーマ','Theme'));
     bar.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===lang));
   }
+  function applyAppName(){
+    const m=document.querySelector('link[rel="manifest"]');
+    if(m) m.setAttribute('href',lang==='en'?'manifest.en.webmanifest':'manifest.webmanifest');
+    const t=document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if(t) t.content=tr('ハモリ道場','Harmony Dojo');
+  }
+  applyAppName();
   function apply(){
-    root.lang=lang;
+    root.lang=lang; applyAppName();
     if(!bar) makeBar();
     document.querySelectorAll('[data-en]').forEach(el=>{
       if(el.dataset.ja===undefined) el.dataset.ja=el.innerHTML;
