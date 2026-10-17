@@ -12,13 +12,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ハモリ道場">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>ハモリ道場</title>
+<title data-en="Harmony Dojo">ハモリ道場</title>
+<script src="prefs.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <style>
 :root{--bg:#EEF1F4;--panel:#FFFFFF;--ink:#18202B;--muted:#5D6877;--line:#D3DAE2;--brass:#B07514;
   --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
   --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;color-scheme:light}
-@media (prefers-color-scheme: dark){:root{--bg:#12161C;--panel:#1B2129;--ink:#E7EBF0;--muted:#98A3B1;--line:#2E3742;--brass:#E2A63E;color-scheme:dark}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12161C;--panel:#1B2129;--ink:#E7EBF0;--muted:#98A3B1;--line:#2E3742;--brass:#E2A63E;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12161C;--panel:#1B2129;--ink:#E7EBF0;--muted:#98A3B1;--line:#2E3742;--brass:#E2A63E;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
@@ -36,19 +38,20 @@ a.card span{font-size:13px;color:var(--brass);font-weight:700}
 </head>
 <body>
 <div class="wrap">
-  <div><h1>ハモリ道場</h1><div class="en">Harmony Dojo</div></div>
-  <p class="lead">相対音感とハモリの感覚を育てるための、ブラウザで動く練習ページです。</p>
+  <div><h1 data-en="Harmony Dojo">ハモリ道場</h1><div class="en" data-en="ハモリ道場">Harmony Dojo</div></div>
+  <p class="lead" data-en="Browser-based practice pages for developing relative pitch and a feel for harmony.">相対音感とハモリの感覚を育てるための、ブラウザで動く練習ページです。</p>
   <a class="card" href="listening.html">
-    <h2>聴く <small>Listen</small></h2>
-    <p>2つの音を同時に鳴らし、片方を少しずつ動かして唸りが消える純正音程を探します。</p>
-    <span>聴いて合わせる</span>
+    <h2 data-en="Listen <small>聴く</small>">聴く <small>Listen</small></h2>
+    <p data-en="Play two notes together and move one of them bit by bit to find the just interval where the beating disappears.">2つの音を同時に鳴らし、片方を少しずつ動かして唸りが消える純正音程を探します。</p>
+    <span data-en="Tune by ear">聴いて合わせる</span>
   </a>
   <a class="card" href="singing.html">
-    <h2>歌う <small>Sing</small></h2>
-    <p>主音のドローンに合わせて指定の音を歌い、ずれをセント単位で表示します。マイクとヘッドホンを使います。</p>
-    <span>歌って合わせる</span>
+    <h2 data-en="Sing <small>歌う</small>">歌う <small>Sing</small></h2>
+    <p data-en="Sing the given note over a tonic drone and see how far off you are, in cents. Uses a microphone and headphones.">主音のドローンに合わせて指定の音を歌い、ずれをセント単位で表示します。マイクとヘッドホンを使います。</p>
+    <span data-en="Tune by singing">歌って合わせる</span>
   </a>
 </div>
+<script>applyLang();</script>
 <script>
 /* オフラインでも使えるようにする(PWA) */
 if('serviceWorker' in navigator && location.protocol==='https:') window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
