@@ -21,6 +21,7 @@
 :root{
   --bg:#EEF1F4; --panel:#FFFFFF; --ink:#18202B; --muted:#5D6877; --line:#D3DAE2;
   --brass:#B07514; --brass-soft:#F4E6CC; --good:#2F7A5B; --warn:#B8860B; --bad:#B4483C;
+  --just:#2F7A5B; --et:#7A5AA8; --pyth:#2D6CA3;
   --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
   --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -28,10 +29,12 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#12161C; --panel:#1B2129; --ink:#E7EBF0; --muted:#98A3B1; --line:#2E3742;
-  --brass:#E2A63E; --brass-soft:#3A2E18; --good:#5CC49A; --warn:#E0B44A; --bad:#E07A6C; color-scheme:dark}}
+  --brass:#E2A63E; --brass-soft:#3A2E18; --good:#5CC49A; --warn:#E0B44A; --bad:#E07A6C;
+  --just:#5CC49A; --et:#B194E0; --pyth:#7FB4E8; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#12161C; --panel:#1B2129; --ink:#E7EBF0; --muted:#98A3B1; --line:#2E3742;
-  --brass:#E2A63E; --brass-soft:#3A2E18; --good:#5CC49A; --warn:#E0B44A; --bad:#E07A6C; color-scheme:dark}
+  --brass:#E2A63E; --brass-soft:#3A2E18; --good:#5CC49A; --warn:#E0B44A; --bad:#E07A6C;
+  --just:#5CC49A; --et:#B194E0; --pyth:#7FB4E8; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7}
@@ -94,6 +97,12 @@ button:disabled{opacity:.45;cursor:default}
 .meter .mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5;transform:translateX(-1px)}
 .meter .needle{position:absolute;top:4px;bottom:4px;width:6px;border-radius:3px;background:var(--brass);transform:translateX(-3px);transition:left .06s linear}
 .meter .needle[hidden]{display:none}
+.meter .tmark{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed;transform:translateX(-1px);opacity:.9}
+.tlegend{display:flex;flex-wrap:wrap;gap:2px 14px;font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px;min-height:1.7em}
+.tlegend span{display:inline-flex;align-items:center;gap:5px}
+.tlegend i{display:inline-block;width:12px;height:0;border-top:2px dashed}
+.tlegend .self{color:var(--ink);font-weight:600}
+.tlegend .self i{border-top-style:solid}
 .scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px}
 .hold{height:6px;border-radius:3px;background:var(--bg);overflow:hidden}
 .hold i{display:block;height:100%;width:0;background:var(--good)}
@@ -193,6 +202,11 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
           <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる" data-en-aria-label="Raise by 0.5 Hz">+</button>
           <div class="chips" id="a4presets"></div>
         </div>
+        <div class="settings" style="margin-top:12px">
+          <div class="field"><label class="label" for="anchor" data-en="What the reference sets">基準ピッチを合わせる音</label>
+            <select id="anchor"><option value="et" data-en="Equal-tempered A (tonic follows ET)">平均律の A(主音は平均律の高さ)</option><option value="tuned" data-en="A in the target tuning">目標の音律での A</option></select></div>
+        </div>
+        <p class="note" id="anchorNote" style="margin-top:8px"></p>
       </fieldset>
 
       <fieldset class="group">
@@ -203,7 +217,7 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
           <div class="field"><label class="label" for="reg" data-en="Register">高さ</label>
             <select id="reg"><option value="bass" data-en="Very low (tonic near C2)">とても低い(主音 C2 付近)</option><option value="low" data-en="Low (tonic near C3)">低い(主音 C3 付近)</option><option value="high" selected data-en="High (tonic near C4)">高い(主音 C4 付近)</option></select></div>
           <div class="field"><label class="label" for="timbre" data-en="Timbre">音色</label>
-            <select id="timbre"><option value="organ" data-en="Organ">オルガン</option><option value="soft" data-en="Soft (slowly shimmering)">やわらか(ゆっくり揺らぐ)</option><option value="tanpura" data-en="Tanpura-like (repeated plucked strings)">タンブーラ風(撥弦の繰り返し)</option></select></div>
+            <select id="timbre"><option value="organ" data-en="Organ">オルガン</option><option value="soft" data-en="Soft (slowly shimmering)">やわらか(ゆっくり揺らぐ)</option><option value="tanpura" data-en="Tanpura-like (repeated plucked strings)">タンブーラ風(撥弦の繰り返し)</option><option value="hum" data-en="Humming (vocal)">ハミング(声の響き)</option><option value="cello" data-en="Cello-like (bowed)">チェロ風(弓の持続音)</option></select></div>
         </div>
       </fieldset>
 
@@ -256,8 +270,9 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
     </div>
 
     <div>
-      <div class="meter" id="meter"><div class="zone" id="zoneWarn"></div><div class="zone" id="zoneGood"></div><div class="mid"></div><div class="needle" id="needle" hidden></div></div>
+      <div class="meter" id="meter"><div class="zone" id="zoneWarn"></div><div class="zone" id="zoneGood"></div><div class="mid"></div><div id="tmarks"></div><div class="needle" id="needle" hidden></div></div>
       <div class="scale"><span>−50</span><span>−25</span><span>0</span><span>+25</span><span>+50</span></div>
+      <div class="tlegend" id="tlegend" aria-live="off"></div>
     </div>
     <div class="hold" aria-hidden="true"><i id="holdBar"></i></div>
     <div class="flash" id="flash" aria-live="polite"></div>
@@ -316,29 +331,35 @@ DEGREES.forEach(d=>{d.just=1200*Math.log2(d.p/d.q); d.et=d.s*100;
 const SETS={major:[0,2,4,5,7,9,11], minor:[0,2,3,5,7,8,10], chrom:[0,1,2,3,4,5,6,7,8,9,10,11]};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ'};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('drone-settings')||'{}'));}catch(e){}
 function saveSettings(){try{localStorage.setItem('drone-settings',JSON.stringify(S));}catch(e){}}
 
 KEYS.forEach((k,i)=>{const o=document.createElement('option'); o.value=i; o.textContent=k; $('key').appendChild(o);});
 const bind=(id,prop,conv=v=>v,after)=>{const el=$(id); el.value=S[prop];
   el.addEventListener('change',()=>{S[prop]=conv(el.value); saveSettings(); after&&after();});};
-bind('key','key',Number,()=>{refreshDrone(); buildLadder();});
+bind('key','key',Number,()=>{refreshDrone(); buildLadder(); labelAnchor();});
 bind('reg','reg',v=>v,refreshDrone);
 bind('source','source',v=>v,()=>{ applyProfile(); });
 bind('set','set',v=>v,()=>{resetSeq(); buildLadder(); renderStats(); nextTarget();});
 bind('order','order',v=>v,()=>{resetSeq(); nextTarget();});
-bind('tuning','tuning',v=>v,()=>{buildLadder(); showTarget();});
+bind('tuning','tuning',v=>v,()=>{buildLadder(); showTarget(); onAnchorChange();});
 bind('tol','tol',Number,drawZones);
 bind('hold','hold',Number,()=>resetHold());
 bind('dronemode','droneMode',v=>v,refreshDrone);
 bind('timbre','timbre',v=>v,refreshDrone);
+bind('anchor','anchor',v=>v,()=>onAnchorChange());
 $('vol').value=S.vol; $('vol').addEventListener('input',e=>{S.vol=+e.target.value; saveSettings(); if(droneGain) droneGain.gain.setTargetAtTime(S.vol,ctx.currentTime,.05);});
 $('auto').checked=S.auto; $('auto').onchange=e=>{S.auto=e.target.checked; saveSettings();};
 $('chime').checked=S.chime; $('chime').onchange=e=>{S.chime=e.target.checked; saveSettings();};
 
-const tonicHz=()=>({bass:65.41,low:130.81,high:261.63}[S.reg]||261.63)*Math.pow(2,S.key/12)*A4/440;
 const targetCents=d=>S.tuning==='just'?d.just:S.tuning==='pyth'?d.pyth:d.et;
+/* 主音を平均律からずらす量(セント)。
+   et   : 基準ピッチ = 平均律の A。主音は平均律の高さのまま(純正の A は A4 からずれる)
+   tuned: 基準ピッチ = 目標の音律で取った A。A が A4 ちょうどになるよう主音を動かす
+          例: C の純正で A4=442 → A は 5:3 なので、主音 C を平均律より +15.6 セント上げる */
+const anchorShift=()=>{ if(S.anchor!=='tuned') return 0; const d=DEGREES[(9-S.key+12)%12]; return d.et-targetCents(d); };
+const tonicHz=()=>({bass:65.41,low:130.81,high:261.63}[S.reg]||261.63)*Math.pow(2,S.key/12)*A4/440*Math.pow(2,anchorShift()/1200);
 const wrap=c=>((c%1200)+1200+600)%1200-600;
 
 
@@ -411,7 +432,40 @@ function tanpuraBuffer(f){
   for(let i=0;i<n;i++){ let g=.9/pk; if(i<att) g*=i/att; if(i>n-rel) g*=(n-i)/rel; d[i]*=g; }
   return tanCache[key]=b;
 }
-let droneNodes=[], tanTimer=null;
+let droneNodes=[], tanTimer=null, driftTimer=null;
+/* ハミング / チェロ風: 倍音を1本ずつ別の発振器で鳴らし、
+   - 各倍音の大きさを数秒単位でランダムにゆっくり揺らす(音の高さは一定。全体の音量もほぼ一定)
+   - 各倍音を左右に少しずつ散らす(ヘッドホンでも頭の中にこもらず、まわりに広がって聞こえる)
+   静止した合成音より、長く聴いても疲れにくい */
+const reso=(hz,F,B)=>1/(1+((hz-F)/B)**2);
+const SPECTRA={
+  // 口を閉じた「ん〜」: 低い共鳴(約280Hz)と弱い第2共鳴(約900Hz)。1.4kHz より上はほぼ無し
+  hum:  (n,hz)=>Math.pow(n,-1)*(reso(hz,280,170)+.32*reso(hz,900,260)+.06)/(1+(hz/1400)**4),
+  // 弦の倍音列に胴の共鳴(約220Hz・450Hz・1.1kHz)。耳に刺さる 2.5kHz 付近は弱める
+  cello:(n,hz)=>Math.pow(n,-.85)*(.35+reso(hz,220,90)+.8*reso(hz,450,140)+.45*reso(hz,1100,350))/(1+(hz/2300)**3),
+};
+const SPECTRA_LEVEL={hum:.109, cello:.107};
+function startAdditive(kind){
+  const spec=SPECTRA[kind], parts=[];
+  droneVoices().forEach(v=>{
+    const H=Math.min(28,Math.floor(4500/v.f)), amps=[];
+    for(let n=1;n<=H;n++) amps.push(spec(n,n*v.f));
+    const norm=Math.sqrt(amps.reduce((a,b)=>a+b*b,0));
+    amps.forEach((a,k)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=v.f*(k+1);
+      const base=a/norm*v.g*SPECTRA_LEVEL[kind]*10; g.gain.value=base;
+      let node=o.connect(g);
+      if(ctx.createStereoPanner){ const pn=ctx.createStereoPanner(); pn.pan.value=(k===0?0:(Math.random()*2-1)*.45); node=node.connect(pn); }
+      node.connect(droneGain); o.start(Math.max(0,ctx.currentTime)); droneNodes.push(o);
+      parts.push({g,base,dev:0});
+    });
+  });
+  // ゆっくりしたランダムな揺らぎ(各倍音が独立に ±20% ほど、2〜3秒かけて変化)
+  const drift=()=>{ const t=ctx.currentTime; parts.forEach(p=>{
+      p.dev=Math.max(-.35,Math.min(.35,p.dev*.6+(Math.random()*2-1)*.22));
+      p.g.gain.setTargetAtTime(p.base*(1+p.dev),t,1.2); }); };
+  drift(); driftTimer=setInterval(drift,900);
+}
 function startTanpura(){
   const t=tonicHz();
   // 主音+5度: Pa Sa Sa Sa(低) / 主音のみ: Sa Sa Sa Sa(低)
@@ -434,6 +488,7 @@ function startDrone(){
   ensureCtx(); stopDrone(true);
   droneGain=ctx.createGain(); droneGain.gain.value=0; droneGain.connect(out);
   if(S.timbre==='tanpura') startTanpura();
+  else if(SPECTRA[S.timbre]) startAdditive(S.timbre);
   else{
     let dest=droneGain;
     if(S.timbre==='soft'){
@@ -450,6 +505,7 @@ function startDrone(){
 }
 function stopDrone(quick){
   if(tanTimer){clearInterval(tanTimer); tanTimer=null;}
+  if(driftTimer){clearInterval(driftTimer); driftTimer=null;}
   if(!droneGain) return;
   const g=droneGain, ns=droneNodes; g.gain.setTargetAtTime(0,ctx.currentTime,quick?.02:.1);
   setTimeout(()=>{ns.forEach(o=>{try{o.stop();}catch(e){}}); g.disconnect();},quick?100:700);
@@ -625,6 +681,7 @@ function nextTarget(){
 function showTarget(){
   const free=S.mode==='free';
   $('sol').classList.toggle('free',free);
+  setMarkDeg(free?null:target);
   if(free){ $('sol').textContent='—'; $('deg').textContent=tr('自由に歌う','Free singing'); $('ratio').textContent=tr('いちばん近い音とのずれを表示します','Shows the deviation from the nearest note'); return; }
   const d=target;
   $('sol').textContent=solOf(d);
@@ -669,6 +726,36 @@ function buildLadder(){
 }
 
 /* ---------- Meter ---------- */
+/* ほかの音律での位置: 目標の音律を 0 として、純正・ピタゴラス・平均律が何セントずれた所にあるか。
+   メーターとずれの推移グラフに点線で示す。位置が同じ音律(例: 完全5度の純正とピタゴラス)はまとめる */
+const TUNINGS=[{k:'just',ja:'純正',en:'Just'},{k:'pyth',ja:'ピタゴラス',en:'Pyth.'},{k:'et',ja:'平均律',en:'Equal'}];
+let markDeg=null, tuningMarks=[];
+function setMarkDeg(d){
+  if(d===markDeg&&tuningMarks.tuning===S.tuning) return;
+  markDeg=d; tuningMarks=[];
+  if(d){
+    const base=targetCents(d);
+    TUNINGS.forEach(t=>{
+      const c=d[t.k]-base, same=tuningMarks.find(m=>Math.abs(m.c-c)<0.05);
+      if(same) same.ts.push(t); else tuningMarks.push({c,ts:[t]});
+    });
+  }
+  tuningMarks.tuning=S.tuning;
+  renderMarks();
+}
+function renderMarks(){
+  const box=$('tmarks'), lg=$('tlegend'); box.innerHTML=''; lg.innerHTML='';
+  tuningMarks.forEach(m=>{
+    const self=Math.abs(m.c)<0.05, color=`var(--${m.ts[0].k})`;
+    if(!self&&Math.abs(m.c)<=50){
+      const e=document.createElement('div'); e.className='tmark'; e.style.left=(50+m.c)+'%'; e.style.borderColor=color; box.appendChild(e);
+    }
+    const sp=document.createElement('span'); if(self) sp.className='self';
+    const v=self?tr('目標','target'):`${m.c>0?'+':'−'}${Math.abs(m.c).toFixed(1)}`;
+    sp.innerHTML=`<i style="border-color:${color}"></i>${m.ts.map(t=>tr(t.ja,t.en)).join('=')} ${v}`;
+    lg.appendChild(sp);
+  });
+}
 function drawZones(){
   const pct=c=>50+c; // ±50 cent -> 0..100%
   const g=$('zoneGood'), w=$('zoneWarn');
@@ -697,6 +784,13 @@ function drawTrace(now){
   [-50,-25,0,25,50].forEach(c=>{g2.beginPath(); g2.moveTo(0,y(c)); g2.lineTo(w,y(c)); g2.stroke();});
   g2.fillStyle=col('--muted'); g2.font='10px "IBM Plex Mono",monospace';
   [-50,0,50].forEach(c=>g2.fillText((c>0?'+':'')+c,4,y(c)-3));
+  const ms=tuningMarks.filter(m=>Math.abs(m.c)>=0.05&&Math.abs(m.c)<=60).map(m=>({m,yy:y(m.c),ly:y(m.c)-3})).sort((a,b)=>a.ly-b.ly);
+  for(let i=1;i<ms.length;i++) ms[i].ly=Math.max(ms[i].ly,ms[i-1].ly+11);
+  g2.setLineDash([4,4]); g2.lineWidth=1.5; g2.textAlign='right';
+  ms.forEach(({m,yy,ly})=>{ const c=col('--'+m.ts[0].k);
+    g2.strokeStyle=c; g2.beginPath(); g2.moveTo(0,yy); g2.lineTo(w,yy); g2.stroke();
+    g2.fillStyle=c; g2.fillText(m.ts.map(t=>tr(t.ja,t.en)).join('='),w-4,ly); });
+  g2.setLineDash([]); g2.textAlign='left';
   // 合格した時点の緑の縦帯(グラフと一緒に左へ流れる)
   g2.fillStyle=col('--good');
   passMarks.forEach(m=>{const x=w-(now-m.t)/6000*w, bw=m.len/6000*w; g2.globalAlpha=.35; g2.fillRect(x-bw,0,bw,h); g2.globalAlpha=1; g2.fillRect(x-1.5,0,3,h);});
@@ -728,7 +822,7 @@ function loop(){
     const fromTonic=1200*Math.log2(f/tonicHz());
     const pos=((fromTonic%1200)+1200)%1200;
     voice.hidden=false; voice.style.left=(pos/1200*100)+'%';
-    if(S.mode==='free'){ const n=nearestDegree(fromTonic); dev=n.dev; $('sol').textContent=solOf(n.d); $('deg').textContent=degLine(n.d); }
+    if(S.mode==='free'){ const n=nearestDegree(fromTonic); dev=n.dev; setMarkDeg(n.d); $('sol').textContent=solOf(n.d); $('deg').textContent=degLine(n.d); }
     else dev=wrap(fromTonic-targetCents(target));
     const midi=69+12*Math.log2(f/A4), nm=Math.round(midi);
     const names=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
@@ -845,14 +939,23 @@ $('a4').addEventListener('input',e=>{const v=parseFloat(e.target.value); if(v>=4
 $('a4').addEventListener('change',e=>setA4(parseFloat(e.target.value)||440));
 $('a4down').onclick=()=>setA4(A4-0.5);
 $('a4up').onclick=()=>setA4(A4+0.5);
-function onA4Change(){ refreshDrone(); updateSummary(); }
+function onA4Change(){ refreshDrone(); updateSummary(); labelAnchor(); }
+function onAnchorChange(){ refreshDrone(); updateSummary(); labelAnchor(); }
+// 今の設定で主音と A が何 Hz になるかを示す
+function labelAnchor(){
+  const t=tonicHz(), sh=anchorShift(), key=KEYS[S.key], d=DEGREES[(9-S.key+12)%12];
+  const aHz=A4*Math.pow(2,(targetCents(d)-d.et+sh)/1200);
+  const shTxt=Math.abs(sh)<0.05?tr('平均律と同じ','same as equal temperament'):tr(`平均律より ${sh>0?'+':'−'}${Math.abs(sh).toFixed(1)} セント`,`${sh>0?'+':'−'}${Math.abs(sh).toFixed(1)} cents from equal temperament`);
+  $('anchorNote').textContent=tr(`今の設定: 主音 ${key} = ${t.toFixed(2)} Hz(${shTxt})、目標の音律での A = ${aHz.toFixed(2)} Hz`,
+    `Current: tonic ${key} = ${t.toFixed(2)} Hz (${shTxt}); A in the target tuning = ${aHz.toFixed(2)} Hz`);
+}
 
 /* ---------- 設定画面 ---------- */
 const dlg=$('settingsDlg');
 const optText=id=>{const el=$(id); return el.options[el.selectedIndex].text.replace(/\(.*\)$/,'').trim();};
 // 設定ボタンの横に、隠れている設定の今の値を1行で出す
 function updateSummary(){
-  $('setSum').textContent=[`A4=${A4}`, optText('timbre'), optText('dronemode'), tr(`±${S.tol}セント`,`±${S.tol} cents`), tr(`${S.hold/1000}秒`,`${S.hold/1000} s`),
+  $('setSum').textContent=[`A4=${A4}`+(S.anchor==='tuned'?tr('(音律のA)',' (tuned A)'):''), optText('timbre'), optText('dronemode'), tr(`±${S.tol}セント`,`±${S.tol} cents`), tr(`${S.hold/1000}秒`,`${S.hold/1000} s`),
     optText('source'), S.speaker?tr('スピーカー','Speakers'):tr('ヘッドホン','Headphones')].join(tr('・',' · '));
 }
 $('openSettings').onclick=()=>{ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); };
@@ -869,7 +972,7 @@ setStatus('ヘッドホンの使用をおすすめします。スピーカーか
   'Headphones are recommended. If the mic picks up the drone from speakers, the measurement gets disturbed.');
 // 言語を切り替えたら、JS で作った表示を書き直す
 onLang(()=>{
-  labelMicBtn(); labelDroneBtn(); renderStatus(); labelA4Presets(); updateSummary();
+  labelMicBtn(); labelDroneBtn(); renderStatus(); labelA4Presets(); updateSummary(); labelAnchor(); renderMarks();
   delete $('resetStats').dataset.confirm; labelResetStats(); $('resetMsg').textContent='';
   $('flash').textContent=''; showTarget(); buildLadder(); renderStats();
   if(!micOn) $('hz').textContent=tr('声を待っています','Waiting for your voice');
