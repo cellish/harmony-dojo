@@ -51,6 +51,13 @@ header p{margin:4px 0 0;color:var(--muted)}
 @media (max-width:480px){.settings{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}.group{padding-inline:12px}}
 /* 表に出す練習の設定 + 設定ボタン */
 .practice{display:flex;flex-direction:column;gap:10px}
+/* 設定の今の値の一覧。押すと設定画面を開く */
+.setlink{font:inherit;display:inline-block;max-width:100%;min-width:0;padding:4px 8px;margin:0 -8px;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer;text-align:left}
+.setlink:hover{background:color-mix(in srgb, var(--ink) 6%, transparent);color:var(--ink)}
+.setlink:hover .setsum{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+.setlink:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.setlink .chev{font-weight:700;margin-left:6px}
+.setlink .setsum{margin-left:6px}
 .setbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .setsum{font-size:13px;color:var(--muted);font-family:var(--mono);min-width:0}
 /* 設定画面: 画面中央のパネル。スマホでは下から出るシート */
@@ -230,8 +237,7 @@ header a{color:var(--brass)}
         <select id="tuning"><option value="just" data-en="Just">純正</option><option value="pyth" data-en="Pythagorean">ピタゴラス</option><option value="et" data-en="Equal">平均律</option></select></div>
     </div>
     <div class="setbar">
-      <button class="btn" type="button" id="openSettings" aria-haspopup="dialog" data-en="⚙ Settings">⚙ 設定</button>
-      <span class="setsum" id="setSum"></span>
+      <button class="setlink" type="button" id="openSettings" aria-haspopup="dialog" title="押すと設定を開きます" data-en-title="Open settings"><span aria-hidden="true">⚙</span><span class="setsum" id="setSum"></span><span class="chev" aria-hidden="true">›</span></button>
     </div>
   </div>
 
