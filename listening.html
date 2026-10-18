@@ -117,6 +117,13 @@ header a{color:var(--brass)}
 /* 設定ボタンと、押すと開く設定画面(スマホでは下から出るシート) */
 .pickhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .pickhead .btn{padding:4px 12px;font-size:14px;flex:none}
+/* 設定の今の値の一覧。押すと設定画面を開く */
+.setlink{font:inherit;display:inline-block;max-width:100%;min-width:0;padding:4px 8px;margin:0 -8px;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer;text-align:left}
+.setlink:hover{background:color-mix(in srgb, var(--ink) 6%, transparent);color:var(--ink)}
+.setlink:hover .setsum{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+.setlink:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.setlink .chev{font-weight:700;margin-left:6px}
+.setlink .setsum{margin-left:6px}
 .setbox{display:flex;align-items:center;gap:10px;min-width:0}
 .pickhead .label{white-space:nowrap}
 .setsum span{white-space:nowrap}
@@ -236,8 +243,7 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
   <div class="bench">
     <div>
       <div class="pickhead"><div class="label" data-en="Question mode">出題のしかた</div>
-        <div class="setbox"><span class="setsum" id="setSum"></span>
-          <button class="btn" type="button" id="openSettings" aria-haspopup="dialog" data-en="⚙ Settings">⚙ 設定</button></div></div>
+        <div class="setbox"><button class="setlink" style="margin-left:0;text-align:right" type="button" id="openSettings" aria-haspopup="dialog" title="押すと設定を開きます" data-en-title="Open settings"><span aria-hidden="true">⚙</span><span class="setsum" id="setSum"></span><span class="chev" aria-hidden="true">›</span></button></div></div>
       <div class="chips" id="picks">
         <button class="chip" type="button" id="pick-fixed" aria-pressed="true" data-en="Chosen interval">選んだ音程</button>
         <button class="chip" type="button" id="pick-random" aria-pressed="false" data-en="Random">ランダム</button>
