@@ -162,25 +162,52 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
 .volbox input{width:140px}
 @media (max-width:480px){.sol{font-size:56px}.readout{margin-left:0;text-align:left}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+[hidden]{display:none!important}
+header a{color:var(--brass)}
+/* 練習の種類: 4つを1行の切り替えボタンに */
+.modes{display:flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.modes button{flex:1 1 0;min-width:0;font:inherit;font-weight:700;font-size:14px;border:0;background:none;color:var(--muted);padding:7px 4px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.modes button:hover{color:var(--ink)}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+@media (max-width:420px){.modes button{font-size:13px}}
+/* ハモリ: 旋律と自分のパートを2段で表示 */
+.phrase{display:flex;flex-direction:column;gap:2px;overflow-x:auto;font-size:15px;margin-top:-6px}
+.phrase .ln{display:flex;gap:2px;align-items:baseline;white-space:nowrap}
+.phrase .lb{flex:none;width:4.5em;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.phrase .n{min-width:2.1em;text-align:center;color:var(--muted);border-radius:6px}
+.phrase .n.done{color:var(--ink)}
+.phrase .n.cur{color:var(--panel);background:var(--brass);font-weight:700}
+.tips{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:14px}
+.tips b{color:var(--ink)}
+.mono{font-family:var(--mono)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1 data-en="Harmony Dojo: Sing">ハモリ道場：歌う</h1>
-    <div class="en" data-en="ハモリ道場：歌う">Harmony Dojo: Sing</div>
-    <p data-en="Keep the tonic drone sounding and sing the note shown. The microphone measures your pitch and shows how many cents you are off from the drone. You can sing in any octave.">主音のドローンを鳴らしたまま、指定された音を歌います。声の高さをマイクで測り、ドローンに対して何セントずれているかを表示します。オクターヴはどこで歌っても構いません。</p>
+    <p data-en='Sing against the drone and see, in cents, how far you are from the target. <a href="#guide" class="toguide">How to use</a>'>ドローンに合わせて歌うと、目標からのずれをセント単位で表示します。<a href="#guide" class="toguide">使い方</a></p>
   </header>
 
-
-  <!-- 練習ごとに変える設定だけを表に出し、一度決めたら触らない設定は「設定」画面にまとめる -->
+  <!-- 練習の種類 → 練習ごとに変える設定。一度決めたら触らない設定は「設定」画面にまとめる -->
   <div class="practice">
+    <div class="modes" id="modes" role="group" aria-label="練習の種類" data-en-aria-label="Practice mode">
+      <button type="button" data-mode="quiz" data-en="Notes">出題</button>
+      <button type="button" data-mode="harm" data-en="Harmony">ハモリ</button>
+      <button type="button" data-mode="free" data-en="Free">自由に歌う</button>
+      <button type="button" data-mode="tuner" data-en="Tuner">チューナー</button>
+    </div>
+    <p class="note" id="modeNote"></p>
     <div class="settings">
       <div class="field"><label class="label" for="key" data-en="Tonic">主音</label><select id="key"></select></div>
-      <div class="field"><label class="label" for="set" data-en="Notes">出題範囲</label>
+      <div class="field" data-modes="quiz harm free"><label class="label" for="set" data-en="Scale">音階</label>
         <select id="set"><option value="major" data-en="Major scale">長音階</option><option value="minor" data-en="Minor scale (natural)">短音階(自然)</option><option value="chrom" data-en="All 12 semitones">半音階すべて</option></select></div>
-      <div class="field"><label class="label" for="order" data-en="Order">出題の順番</label>
+      <div class="field" data-modes="quiz free"><label class="label" for="chord" data-en="Accompanying chord">伴奏の和音</label><select id="chord"></select></div>
+      <div class="field" data-modes="quiz"><label class="label" for="order" data-en="Order">出題の順番</label>
         <select id="order"><option value="random" data-en="Random">ランダム</option><option value="up" data-en="Ascending scale">上行音階</option><option value="down" data-en="Descending scale">下行音階</option></select></div>
+      <div class="field" data-modes="harm"><label class="label" for="phrase" data-en="Melody">旋律</label><select id="phrase"></select></div>
+      <div class="field" data-modes="harm"><label class="label" for="harmIv" data-en="Your part">ハモる音</label>
+        <select id="harmIv"><option value="d3" data-en="3rd below">3度下</option><option value="u3" data-en="3rd above">3度上</option><option value="d6" data-en="6th below">6度下</option></select></div>
       <div class="field"><label class="label" for="tuning" data-en="Target tuning">目標の音律</label>
         <select id="tuning"><option value="just" data-en="Just">純正</option><option value="pyth" data-en="Pythagorean">ピタゴラス</option><option value="et" data-en="Equal">平均律</option></select></div>
     </div>
@@ -212,7 +239,7 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
       <fieldset class="group">
         <legend data-en="Drone<span>The accompaniment that keeps sounding</span>">ドローン<span>鳴らし続ける伴奏の音</span></legend>
         <div class="settings">
-          <div class="field"><label class="label" for="dronemode" data-en="Notes">鳴らす音</label>
+          <div class="field"><label class="label" for="dronemode" data-en="Notes (without a chord)">鳴らす音(和音なしのとき)</label>
             <select id="dronemode"><option value="root" data-en="Tonic only">主音のみ</option><option value="fifth" data-en="Tonic + 5th">主音+5度</option></select></div>
           <div class="field"><label class="label" for="reg" data-en="Register">高さ</label>
             <select id="reg"><option value="bass" data-en="Very low (tonic near C2)">とても低い(主音 C2 付近)</option><option value="low" data-en="Low (tonic near C3)">低い(主音 C3 付近)</option><option value="high" selected data-en="High (tonic near C4)">高い(主音 C4 付近)</option></select></div>
@@ -245,10 +272,10 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
 
   <div class="bench">
     <div class="row">
-      <button class="btn primary" id="micBtn">マイクを開始</button>
-      <button class="btn" id="droneBtn">▶ ドローン</button>
-      <button class="chip" type="button" id="freeBtn" aria-pressed="false" title="目標の音を決めずに歌い、いちばん近い音とのずれを表示します" data-en-title="Sing without a target; shows how far you are from the nearest note" data-en="Free singing">自由に歌う</button>
-      <label class="volbox"><span class="label" data-en="Drone volume">ドローン音量</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
+      <button class="btn primary" id="startBtn"></button>
+      <button class="chip" type="button" id="micBtn" aria-pressed="false"></button>
+      <button class="chip" type="button" id="droneBtn" aria-pressed="false"></button>
+      <label class="volbox"><span class="label" data-en="Volume">音量</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
     </div>
     <div class="statusrow">
       <div class="status" id="status"></div>
@@ -256,9 +283,9 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
         <span class="label" data-en="Input">入力</span><div class="level"><i id="lvl"></i><b id="lvlTh"></b></div>
       </div>
     </div>
-    <div class="row" id="quizBtns">
-      <button class="btn" id="tonicBtn" data-en="Back to tonic <kbd>T</kbd>">主音に戻る <kbd>T</kbd></button>
-      <button class="btn" id="nextBtn" data-en="Next note <kbd>N</kbd>">次の音 <kbd>N</kbd></button>
+    <div class="row" id="quizBtns" data-modes="quiz harm">
+      <button class="btn" id="tonicBtn"></button>
+      <button class="btn" id="nextBtn"></button>
       <button class="btn" id="hintBtn" data-en="Hear the note <kbd>H</kbd>">お手本を聴く <kbd>H</kbd></button>
       <label class="status" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="auto" checked> <span data-en="Auto-advance on pass">合格したら自動で次へ</span></label>
     </div>
@@ -268,40 +295,66 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
       <div class="tmeta"><div class="deg" id="deg">第3音・長3度</div><div class="ratio" id="ratio">5:4 / 386.3 cent</div></div>
       <div class="readout"><div class="c" id="cents">—</div><div class="hz" id="hz"></div></div>
     </div>
+    <div class="phrase" id="phrase-view" data-modes="harm"></div>
 
     <div>
       <div class="meter" id="meter"><div class="zone" id="zoneWarn"></div><div class="zone" id="zoneGood"></div><div class="mid"></div><div id="tmarks"></div><div class="needle" id="needle" hidden></div></div>
       <div class="scale"><span>−50</span><span>−25</span><span>0</span><span>+25</span><span>+50</span></div>
       <div class="tlegend" id="tlegend" aria-live="off"></div>
     </div>
-    <div class="hold" aria-hidden="true"><i id="holdBar"></i></div>
-    <div class="flash" id="flash" aria-live="polite"></div>
-
-
-    <div>
-      <div class="label" data-en="Position from the tonic">主音からの位置</div>
-      <div class="ladder" id="ladder"><div class="track"></div></div>
-    </div>
+    <div class="hold" aria-hidden="true" data-modes="quiz harm"><i id="holdBar"></i></div>
+    <div class="flash" id="flash" aria-live="polite" data-modes="quiz harm"></div>
 
     <div>
       <div class="label" data-en="Deviation over time (last 6 s; green bands mark passes)">ずれの推移(直近6秒・緑の縦帯が合格した時点)</div>
       <canvas id="trace" width="700" height="140"></canvas>
     </div>
+
+    <div data-modes="quiz harm free">
+      <div class="label" data-en="Position from the tonic">主音からの位置</div>
+      <div class="ladder" id="ladder"><div class="track"></div></div>
+    </div>
+
+    <div data-modes="tuner">
+      <div class="label" id="tunerTitle"></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th data-en="Note">音名</th><th data-en="Degree">度数</th><th data-en="Ratio">比</th><th class="n" data-en="vs. equal (cents)">平均律との差(セント)</th><th class="n" data-en="Frequency">周波数</th></tr></thead>
+        <tbody id="tunerRows"></tbody>
+      </table></div>
+    </div>
   </div>
 
-  <details class="fold" id="statsFold" open>
+  <details class="fold" id="statsFold" open data-modes="quiz">
     <summary><h2 data-en="Record">記録</h2></summary>
     <div class="tablewrap"><table>
       <thead><tr><th data-en="Note">音</th><th class="n" data-en="Passes">合格回数</th><th class="n" data-en="Avg. deviation">平均のずれ</th><th class="n" data-en="Tendency">傾向</th></tr></thead>
       <tbody id="stats"></tbody>
     </table></div>
+    <p class="note" id="statsNote" style="margin-top:6px"></p>
     <div class="row" style="margin-top:8px"><button class="btn" id="resetStats"></button><span class="status" id="resetMsg"></span></div>
   </details>
 
-  <section>
-    <h2 data-en="Tips">使い方のこつ</h2>
-    <p class="note" data-en="Start by playing only the drone and singing the tonic (Do) to settle your ear before moving on to other notes. When you tune to just intonation, at the right spot your voice melts into the drone and the beating disappears. Pythagorean tuning is built by stacking pure fifths only; its thirds and sixths are much wider than just (a major third is about 22 cents higher). When singing melodies, the leading tone (Ti) feels strongly pulled toward the tonic. Your ear develops better if you tune with your eyes closed and then check, rather than staring at the meter. When playing cello or violin, switch “Source” in Settings to your instrument; the detection range and response speed will be adjusted for it. Vibrato makes it hard to stay within the tolerance, so start with a straight tone. If the microphone does not work, check the microphone permission in your browser’s address bar.">まずドローンだけを鳴らし、主音(ド)を歌って耳を慣らしてから出題に進むと安定します。純正で合わせると、正しい位置で声がドローンに溶け込み、うなりが消えた感じになります。ピタゴラス音律は5度だけを積み重ねて作る音律で、3度と6度が純正よりかなり広く(長3度で約22セント高く)なります。旋律を歌うときは、導音(シ)が主音に強く引き寄せられる感じが出ます。メーターを見続けるより、目を閉じて合わせてから確認するほうが耳が育ちます。チェロやヴァイオリンで使うときは「音源」を楽器に切り替えてください。検出する音域と反応の速さが楽器向けになります。ヴィブラートをかけると合格の幅に収まりにくいので、最初はノン・ヴィブラートで合わせるのがおすすめです。マイクが使えない場合は、ブラウザのアドレスバーのマイク許可を確認してください。</p>
-  </section>
+  <details class="fold" id="guide">
+    <summary><h2 data-en="How to use">使い方と解説</h2></summary>
+    <ul class="tips">
+      <li data-en="<b>Getting started</b>: press “Start practice” to turn on the microphone and the drone together. Headphones are recommended; if the mic picks up the drone from speakers, the measurement gets disturbed.">
+        <b>はじめに</b>：「練習を始める」でマイクとドローンが同時に始まります。ヘッドホンの使用をおすすめします。スピーカーから出たドローンをマイクが拾うと、測定が乱れます。</li>
+      <li data-en="<b>Warm up</b>: start with the drone alone and sing the tonic (Do) to settle your ear. You can sing in any octave.">
+        <b>耳を慣らす</b>：まずドローンだけを鳴らして主音(ド)を歌うと安定します。オクターヴはどこで歌っても構いません。</li>
+      <li data-en="<b>Just intonation</b>: at the right spot your voice melts into the drone and the beating disappears. Pythagorean tuning stacks pure fifths only; its thirds and sixths are much wider than just (a major third is about 22 cents higher), and the leading tone (Ti) feels strongly pulled toward the tonic.">
+        <b>純正とピタゴラス</b>：純正で合わせると、正しい位置で声がドローンに溶け込み、うなりが消えます。ピタゴラス音律は5度だけを積み重ねた音律で、3度と6度が純正よりかなり広く(長3度で約22セント高く)、導音(シ)が主音に強く引き寄せられます。</li>
+      <li data-en="<b>Accompanying chord</b>: the right height of a note depends on the chord underneath. In C major, Re is 9:8 above Do over the V chord (G–B–D) but 10:9 over the ii chord (D–F–A), 21.5 cents lower. Choose a chord and you will be asked to sing its chord tones in just intonation.">
+        <b>伴奏の和音</b>：同じ音でも、下で鳴る和音によって正しい高さが変わります。ハ長調のレは、Ⅴの和音(ソ・シ・レ)の上では主音から 9:8、Ⅱの和音(レ・ファ・ラ)の上では 10:9 で、21.5セント低くなります。和音を選ぶと、その和音の構成音を純正で出題します。</li>
+      <li data-en="<b>Harmony</b>: the app plays a melody and you sing a 3rd or 6th against it. The target is the height that forms a pure interval with the melody note, so it can differ slightly from the scale note sung over the drone alone.">
+        <b>ハモリ</b>：アプリが旋律を鳴らし、あなたは3度や6度でハモります。目標は旋律の音と純正の音程になる高さなので、ドローンだけに合わせたときの音階の高さとわずかに違うことがあります。</li>
+      <li data-en="<b>Tuner</b>: for setting your instrument to the key. The table shows how many cents each note of the chosen key and tuning differs from equal temperament.">
+        <b>チューナー</b>：楽器を調に合わせるためのモードです。選んだ調と音律で、各音が平均律から何セントずれるかを表で示します。</li>
+      <li data-en="<b>Grow your ear</b>: tune with your eyes closed and then check, rather than staring at the meter. Vibrato makes it hard to stay within the tolerance, so start with a straight tone.">
+        <b>耳を育てる</b>：メーターを見続けるより、目を閉じて合わせてから確認するほうが耳が育ちます。ヴィブラートをかけると合格の幅に収まりにくいので、最初はノン・ヴィブラートで。</li>
+      <li data-en="<b>Instruments</b>: for cello or violin, switch “Source” in Settings; the detection range and response speed are adjusted. If the microphone does not work, check the permission in your browser’s address bar.">
+        <b>楽器で使う</b>：チェロやヴァイオリンでは、設定の「音源」を楽器に切り替えてください。検出する音域と反応の速さが楽器向けになります。マイクが使えないときは、アドレスバーのマイク許可を確認してください。</li>
+    </ul>
+  </details>
 </div>
 
 <script>
@@ -329,27 +382,65 @@ const PYTH=[[1,1],[256,243],[9,8],[32,27],[81,64],[4,3],[729,512],[3,2],[128,81]
 DEGREES.forEach(d=>{d.just=1200*Math.log2(d.p/d.q); d.et=d.s*100;
   [d.pp,d.pq]=PYTH[d.s]; d.pyth=1200*Math.log2(d.pp/d.pq);});
 const SETS={major:[0,2,4,5,7,9,11], minor:[0,2,3,5,7,8,10], chrom:[0,1,2,3,4,5,6,7,8,9,10,11]};
+const NOTE_NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+// 比を 1 以上 2 未満(主音から1オクターヴ以内)にそろえて約分する
+function normFrac(p,q){ while(p>=2*q) q*=2; while(p<q) p*=2; const g=gcd(p,q); return [p/g,q/g]; }
+// 音階の音 d を、純正の比だけ p:q に置き換えたもの(ピタゴラス・平均律の値はそのまま)
+function withRatio(d,p,q,extra){ [p,q]=normFrac(p,q); return Object.assign({},d,{p,q,just:1200*Math.log2(p/q)},extra); }
+
+/* 伴奏の和音: [id, 記号, 根音が音階の何番目か, 主音から見た根音の純正の比]
+   根音の比は、3つの構成音が主音からの純正の比とそろうように選ぶ。
+   長調のⅡm(レ・ファ・ラ)だけは、根音を 10:9 にするとファ 4:3・ラ 5:3 と純正の3度・5度でそろう(9:8 だとそろわない)。
+   そのためⅡmの上で歌うレは、Ⅴの上で歌うレ(9:8)より 21.5 セント低い */
+const CHORDS={
+  major:[['I','Ⅰ',0,[1,1]],['IV','Ⅳ',3,[4,3]],['V','Ⅴ',4,[3,2]],['ii','Ⅱm',1,[10,9]],['vi','Ⅵm',5,[5,3]]],
+  minor:[['i','Ⅰm',0,[1,1]],['iv','Ⅳm',3,[4,3]],['v','Ⅴm',4,[3,2]],['III','Ⅲ',2,[6,5]],['VI','Ⅵ',5,[8,5]]],
+};
+const CHORD_ROLES=[['根音','Root'],['第3音','3rd'],['第5音','5th']];
+
+/* ハモリの旋律: 音階の何番目か(0=主音、7=1オクターヴ上の主音) */
+const PHRASES=[
+  ['scale','音階(上行・下行)','Scale up and down',[0,1,2,3,4,5,6,7,6,5,4,3,2,1,0]],
+  ['down5','5→1 の下行','Descending 5→1',[4,3,2,1,0]],
+  ['arp','分散和音 1-3-5','Broken chord 1-3-5',[0,2,4,7,4,2,0]],
+  ['lamb','メリーさんのひつじ','Mary Had a Little Lamb',[2,1,0,1,2,2,2,1,1,1,2,4,4,2,1,0,1,2,2,2,2,1,1,2,1,0]],
+  ['random','ランダム(順次進行)','Random (stepwise)',null],
+];
+// ハモる音: 旋律から音階でいくつ離れるか
+const HARM_OFF={d3:-2,u3:2,d6:-5};
+const HARM_NAME={d3:['3度下','3rd below'],u3:['3度上','3rd above'],d6:['6度下','6th below']};
+// 旋律との音程(半音の数) → 純正の比
+const HARM_RATIO={3:[6,5],4:[5,4],8:[8,5],9:[5,3]};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et'};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', phrase:'scale', harmIv:'d3'};
+const DEF={...S};
 try{Object.assign(S,JSON.parse(localStorage.getItem('drone-settings')||'{}'));}catch(e){}
+if(!['quiz','harm','free','tuner'].includes(S.mode)) S.mode='quiz';
 function saveSettings(){try{localStorage.setItem('drone-settings',JSON.stringify(S));}catch(e){}}
 
 KEYS.forEach((k,i)=>{const o=document.createElement('option'); o.value=i; o.textContent=k; $('key').appendChild(o);});
+// 保存された値が選択肢にない(古い版の設定など)ときは、既定値に戻す
 const bind=(id,prop,conv=v=>v,after)=>{const el=$(id); el.value=S[prop];
+  if(el.tagName==='SELECT'&&el.selectedIndex<0){ el.value=DEF[prop]; if(el.selectedIndex<0) el.selectedIndex=0; S[prop]=conv(el.value); }
   el.addEventListener('change',()=>{S[prop]=conv(el.value); saveSettings(); after&&after();});};
-bind('key','key',Number,()=>{refreshDrone(); buildLadder(); labelAnchor();});
+bind('key','key',Number,()=>{buildChordOpts(); refreshDrone(); showTarget(); buildLadder(); labelAnchor(); renderTuner(); renderStats();});
 bind('reg','reg',v=>v,refreshDrone);
 bind('source','source',v=>v,()=>{ applyProfile(); });
-bind('set','set',v=>v,()=>{resetSeq(); buildLadder(); renderStats(); nextTarget();});
+buildChordOpts(); buildPhraseOpts();
+bind('set','set',v=>v,()=>{buildChordOpts(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
+bind('chord','chord',v=>v,()=>{refreshDrone(); resetSeq(); restartTargets(); renderStats();});
+bind('phrase','phrase',v=>v,()=>startPhrase());
+bind('harmIv','harmIv',v=>v,()=>{ if(S.mode==='harm') setHarmStep(); });
 bind('order','order',v=>v,()=>{resetSeq(); nextTarget();});
-bind('tuning','tuning',v=>v,()=>{buildLadder(); showTarget(); onAnchorChange();});
+bind('tuning','tuning',v=>v,()=>{ if(S.mode==='harm') setHarmStep(); else {buildLadder(); showTarget();} onAnchorChange(); renderStats();});
 bind('tol','tol',Number,drawZones);
 bind('hold','hold',Number,()=>resetHold());
 bind('dronemode','droneMode',v=>v,refreshDrone);
 bind('timbre','timbre',v=>v,refreshDrone);
 bind('anchor','anchor',v=>v,()=>onAnchorChange());
-$('vol').value=S.vol; $('vol').addEventListener('input',e=>{S.vol=+e.target.value; saveSettings(); if(droneGain) droneGain.gain.setTargetAtTime(S.vol,ctx.currentTime,.05);});
+$('vol').value=S.vol; $('vol').addEventListener('input',e=>{S.vol=+e.target.value; saveSettings(); if(droneGain) droneGain.gain.setTargetAtTime(S.vol,ctx.currentTime,.05); if(mel) mel.g.gain.setTargetAtTime(MEL_LEVEL*S.vol,ctx.currentTime,.05);});
 $('auto').checked=S.auto; $('auto').onchange=e=>{S.auto=e.target.checked; saveSettings();};
 $('chime').checked=S.chime; $('chime').onchange=e=>{S.chime=e.target.checked; saveSettings();};
 
@@ -397,9 +488,16 @@ function organWave(){
   return ctx.createPeriodicWave(re,im);
 }
 function droneVoices(){
-  const t=tonicHz(), v=[{f:t,g:.10},{f:t/2,g:.07}];
-  if(S.droneMode==='fifth') v.push({f:t*1.5,g:.06});
-  return v;
+  const t=tonicHz(), ci=chordOn()?chordInfo():null;
+  if(!ci){
+    const v=[{f:t,g:.10},{f:t/2,g:.07}];
+    if(S.droneMode==='fifth') v.push({f:t*1.5,g:.06});
+    return v;
+  }
+  // 和音: 根音・根音の1オクターヴ下・第3音・第5音。根音が主音より高いときは全体を1オクターヴ下げる
+  let r=targetCents(ci.tones[0]); if(r>600) r-=1200;
+  const above=c=>c-1200*Math.floor((c-r)/1200), hz=c=>t*Math.pow(2,c/1200);   // 根音のすぐ上に置く
+  return [{f:hz(r),g:.09},{f:hz(r-1200),g:.07},{f:hz(above(targetCents(ci.tones[1]))),g:.05},{f:hz(above(targetCents(ci.tones[2]))),g:.05}];
 }
 /* やわらか: 高い倍音をほぼ含まない温かい音。明るさだけを十数秒周期でゆっくり変え、
    音の高さと音量は一定に保つ(唸りの聴き取りを邪魔しないため) */
@@ -469,7 +567,9 @@ function startAdditive(kind){
 function startTanpura(){
   const t=tonicHz();
   // 主音+5度: Pa Sa Sa Sa(低) / 主音のみ: Sa Sa Sa Sa(低)
-  const pat=S.droneMode==='fifth' ? [[t*.75,.95],[t,.8],[t,.8],[t/2,1.1]] : [[t,.9],[t,.8],[t,.8],[t/2,1.1]];
+  let pat=S.droneMode==='fifth' ? [[t*.75,.95],[t,.8],[t,.8],[t/2,1.1]] : [[t,.9],[t,.8],[t,.8],[t/2,1.1]];
+  // 和音: 第5音・第3音・根音・根音(低)
+  if(chordOn()){ const [r,b,th,fi]=droneVoices(); pat=[[fi.f,.9],[th.f,.8],[r.f,.8],[b.f,1.1]]; }
   const gaps=[1.05,1.05,1.05,1.45];
   const bufs=pat.map(([f])=>tanpuraBuffer(f));
   let idx=0, next=ctx.currentTime+.05;
@@ -501,7 +601,7 @@ function startDrone(){
       const g=ctx.createGain(); g.gain.value=v.g*boost; o.connect(g).connect(dest); o.start(); droneNodes.push(o);});
   }
   droneGain.gain.setTargetAtTime(S.vol,ctx.currentTime,.1);
-  droneOn=true; labelDroneBtn(); keepAwake(true);
+  droneOn=true; labelDroneBtn(); keepAwake(true); syncMelody();
 }
 function stopDrone(quick){
   if(tanTimer){clearInterval(tanTimer); tanTimer=null;}
@@ -509,9 +609,36 @@ function stopDrone(quick){
   if(!droneGain) return;
   const g=droneGain, ns=droneNodes; g.gain.setTargetAtTime(0,ctx.currentTime,quick?.02:.1);
   setTimeout(()=>{ns.forEach(o=>{try{o.stop();}catch(e){}}); g.disconnect();},quick?100:700);
-  droneGain=null; droneNodes=[]; droneOn=false; labelDroneBtn(); if(!micOn) keepAwake(false);
+  droneGain=null; droneNodes=[]; droneOn=false; labelDroneBtn(); if(!micOn) keepAwake(false); syncMelody();
 }
-function labelDroneBtn(){ $('droneBtn').textContent=(droneOn?'■ ':'▶ ')+tr('ドローン','Drone'); }
+function labelDroneBtn(){ const b=$('droneBtn'); b.textContent=tr('ドローン','Drone'); b.setAttribute('aria-pressed',droneOn); labelStart(); }
+// 「練習を始める」: マイクとドローンをまとめて始める(チューナーではマイクだけ)。どちらかが動いていれば両方止める
+function labelStart(){ $('startBtn').textContent=(micOn||droneOn)?tr('■ 止める','■ Stop'):tr('▶ 練習を始める','▶ Start practice'); }
+$('startBtn').onclick=()=>{
+  if(micOn||droneOn){ if(micOn) stopMic(); if(droneOn) stopDrone(); }
+  else { if(S.mode!=='tuner') startDrone(); startMic(); }
+};
+
+/* ハモリの旋律: ドローンが鳴っている間だけ、やわらかい音で伸ばし続ける。
+   音が変わるときは一瞬音量を下げて、同じ高さが続くときも区切りが分かるようにする */
+const MEL_LEVEL=.16;
+let mel=null;
+function syncMelody(articulate){
+  const want=S.mode==='harm'&&droneOn&&harm.notes.length>0;
+  if(!want){
+    if(mel){ const m=mel; mel=null; m.g.gain.setTargetAtTime(0,ctx.currentTime,.05); setTimeout(()=>{try{m.o.stop();}catch(e){} m.g.disconnect();},400); }
+    return;
+  }
+  const f=tonicHz()*Math.pow(2,melodyCents(harm.notes[harm.i])/1200), t=ctx.currentTime, lv=MEL_LEVEL*S.vol;
+  if(!mel){
+    const o=ctx.createOscillator(), g=ctx.createGain(); o.setPeriodicWave(softWave()); o.frequency.value=f;
+    g.gain.value=0; o.connect(g).connect(out); o.start(); mel={o,g};
+    g.gain.setTargetAtTime(lv,t,.04);
+  }else if(articulate){
+    mel.g.gain.cancelScheduledValues(t); mel.g.gain.setTargetAtTime(0,t,.015);
+    mel.o.frequency.setValueAtTime(f,t+.06); mel.g.gain.setTargetAtTime(lv,t+.07,.03);
+  }else{ mel.o.frequency.setTargetAtTime(f,t,.02); mel.g.gain.setTargetAtTime(lv,t,.05); }
+}
 function refreshDrone(){ if(droneOn) startDrone(); }
 $('droneBtn').onclick=()=>droneOn?stopDrone():startDrone();
 
@@ -588,14 +715,14 @@ function stopMic(){
   voiced=false; lastRms=0; H.length=0; lastGood=null; pend=null; pendN=0;
   resetHold();
   labelMicBtn();
-  setStatus('マイクを止めました。「マイクを開始」で再開できます。','Microphone stopped. Press “Start mic” to resume.');
+  setStatus('マイクを止めました。「練習を始める」か「マイク」で再開できます。','Microphone stopped. Press “Start practice” or “Mic” to resume.');
   setAudioSession('playback');
   if(!droneOn) keepAwake(false);
 }
 $('micBtn').onclick=()=>micOn?stopMic():startMic();
 $('speaker').checked=!!S.speaker;
 $('speaker').onchange=e=>{ S.speaker=e.target.checked; saveSettings(); if(micOn) startMic(); };
-function labelMicBtn(){ $('micBtn').textContent=micOn?tr('■ マイクを止める','■ Stop mic'):tr('マイクを開始','Start mic'); }
+function labelMicBtn(){ const b=$('micBtn'); b.textContent=tr('マイク','Mic'); b.setAttribute('aria-pressed',micOn); labelStart(); }
 // 言語を切り替えたら書き直せるように、表示中のメッセージを両方の言語で覚えておく
 let statusMsg=null;
 function setStatus(ja,en,err){ statusMsg={ja,en,err}; renderStatus(); }
@@ -666,60 +793,194 @@ function drawLevel(){
 
 /* ---------- Targets ---------- */
 let target=null, lastS=-1, seqIdx=-1;
-// 音階順のときは、次に呼ばれたとき主音(ド)から始まるように位置を戻す
-function resetSeq(){ seqIdx = S.order==='down' ? 1 : -1; }
-function nextTarget(){
-  const list=SETS[S.set]; let s;
-  if(S.order==='up'){ seqIdx=(seqIdx+1)%list.length; s=list[seqIdx]; }
-  else if(S.order==='down'){ seqIdx=(seqIdx-1+list.length)%list.length; s=list[seqIdx]; }
-  else { const pool=list.filter(x=>x!==lastS); s=pool[Math.floor(Math.random()*pool.length)]; }
-  lastS=s;
-  target=DEGREES[s]; resetHold(); $('flash').textContent=''; $('flash').className='flash';
-  showTarget(); buildLadder();
-  const el=$('sol'); el.classList.remove('enter','hit'); void el.offsetWidth; el.classList.add('enter');
+// 和音を伴奏にするのは「出題」「自由に歌う」のときだけ
+const chordOn=()=>(S.mode==='quiz'||S.mode==='free')&&!!CHORDS[S.set]&&CHORDS[S.set].some(c=>c[0]===S.chord);
+function chordInfo(){
+  const c=(CHORDS[S.set]||[]).find(x=>x[0]===S.chord); if(!c) return null;
+  const [id,sym,r,[rp,rq]]=c, L=SETS[S.set];
+  const tones=[0,2,4].map((k,i)=>{
+    const s=L[(r+k)%7], semi=(s-L[r]+12)%12;
+    const iv=i===0?[1,1]:i===1?(semi===4?[5,4]:[6,5]):[3,2];
+    return withRatio(DEGREES[s],rp*iv[0],rq*iv[1],{role:CHORD_ROLES[i]});
+  });
+  return {id,sym,name:chordName(c),tones};
 }
-function showTarget(){
-  const free=S.mode==='free';
-  $('sol').classList.toggle('free',free);
-  setMarkDeg(free?null:target);
-  if(free){ $('sol').textContent='—'; $('deg').textContent=tr('自由に歌う','Free singing'); $('ratio').textContent=tr('いちばん近い音とのずれを表示します','Shows the deviation from the nearest note'); return; }
-  const d=target;
-  $('sol').textContent=solOf(d);
-  $('deg').textContent=degLine(d);
+function chordName([id,sym,r]){ return NOTE_NAMES[(S.key+SETS[S.set][r])%12]+(sym.endsWith('m')?'m':''); }
+function buildChordOpts(){
+  const el=$('chord'), list=CHORDS[S.set]||[];
+  if(!list.some(c=>c[0]===S.chord)) S.chord='none';
+  el.innerHTML=`<option value="none">${tr('なし(主音のドローン)','None (tonic drone)')}</option>`
+    +list.map(c=>`<option value="${c[0]}">${c[1]}(${chordName(c)})</option>`).join('');
+  el.value=S.chord; el.disabled=!list.length;
+}
+function buildPhraseOpts(){
+  const el=$('phrase'); el.innerHTML=PHRASES.map(([id,ja,en])=>`<option value="${id}">${tr(ja,en)}</option>`).join('');
+  if(!PHRASES.some(x=>x[0]===S.phrase)) S.phrase='scale';
+  el.value=S.phrase;
+}
+// 出題・判定に使う音の一覧(チューナーは12音すべて、和音を選んでいればその構成音)
+let poolKey='', poolCache=[];
+function pool(){
+  const k=[S.mode,S.set,S.chord].join('|'); if(k===poolKey) return poolCache;
+  poolKey=k;
+  if(S.mode==='tuner') poolCache=DEGREES;
+  else { const ci=chordOn()?chordInfo():null; poolCache=ci?ci.tones:SETS[S.set].map(s=>DEGREES[s]); }
+  return poolCache;
+}
+// 音階順のときは、次に呼ばれたとき先頭(主音・根音)から始まるように位置を戻す
+function resetSeq(){ seqIdx = S.order==='down' ? 1 : -1; }
+function animSol(){ const el=$('sol'); el.classList.remove('enter','hit'); void el.offsetWidth; el.classList.add('enter'); }
+function setTarget(d){
+  target=d; resetHold(); $('flash').textContent=''; $('flash').className='flash';
+  showTarget(); buildLadder(); animSol();
+}
+function nextTarget(){
+  const list=pool(); let k;
+  if(S.order==='up'){ seqIdx=(seqIdx+1)%list.length; k=seqIdx; }
+  else if(S.order==='down'){ seqIdx=(seqIdx-1+list.length)%list.length; k=seqIdx; }
+  else { const ks=list.map((d,i)=>i).filter(i=>list[i].s!==lastS); k=ks[Math.floor(Math.random()*ks.length)]; }
+  lastS=list[k].s; setTarget(list[k]);
+}
+// 目標を主音(和音のときは主音が無ければ根音)にする。音階順のときは、続けて「次の音」を押すとその隣へ進む
+function tonicTarget(){
+  const list=pool(); let k=list.findIndex(d=>d.s===0); if(k<0) k=0;
+  seqIdx=k; lastS=list[k].s; setTarget(list[k]);
+}
+// 設定が変わったとき、今の練習の種類に合わせて目標を作り直す
+function restartTargets(){
+  labelQuizBtns();
+  if(S.mode==='quiz') nextTarget();
+  else if(S.mode==='harm') startPhrase();
+  else { showTarget(); buildLadder(); }
+}
+
+/* ---------- ハモリ ---------- */
+let harm={notes:[],i:0};
+const harmScale=()=>SETS[S.set==='minor'?'minor':'major'];
+const idxDeg=i=>{ const L=harmScale(); return {d:DEGREES[L[((i%7)+7)%7]], oct:Math.floor(i/7)}; };
+const melodyCents=i=>{ const m=idxDeg(i); return targetCents(m.d)+1200*m.oct; };
+/* 旋律の i 番目の音にハモる目標。純正では、旋律の音と純正の3度・6度になる高さにする
+   (例: 長調で旋律がファのとき、3度下のレは 4:3 ÷ 6:5 = 10:9。主音から見た 9:8 ではない) */
+function harmTarget(i){
+  const m=idxDeg(i), off=HARM_OFF[S.harmIv], h=idxDeg(i+off);
+  if(S.tuning!=='just') return h.d;
+  const r=HARM_RATIO[Math.abs((m.d.s+12*m.oct)-(h.d.s+12*h.oct))]; if(!r) return h.d;
+  return off<0 ? withRatio(h.d,m.d.p*r[1],m.d.q*r[0]) : withRatio(h.d,m.d.p*r[0],m.d.q*r[1]);
+}
+// ランダムな旋律: 主音・第3音・第5音のどれかから始め、主に順次進行で8音。最後は主音
+function randomPhrase(){
+  const n=[[0,2,4][Math.floor(Math.random()*3)]];
+  while(n.length<7){ const st=[-1,1,-1,1,-2,2][Math.floor(Math.random()*6)]; n.push(Math.max(0,Math.min(7,n[n.length-1]+st))); }
+  n.push(n[n.length-1]>=4?7:0); return n;
+}
+function startPhrase(){
+  const ph=PHRASES.find(x=>x[0]===S.phrase)||PHRASES[0];
+  harm={notes:ph[3]||randomPhrase(), i:0};
+  if(S.mode==='harm') setHarmStep();
+}
+function setHarmStep(){ setTarget(harmTarget(harm.notes[harm.i])); syncMelody(true); }
+function harmAdvance(){
+  if(harm.i+1<harm.notes.length){ harm.i++; setHarmStep(); return; }
+  // 最後まで歌えたら最初から(ランダムは新しい旋律で)
+  startPhrase();
+  $('flash').className='flash ok';
+  $('flash').textContent=tr('フレーズを最後まで歌えました。もう一度最初から','Phrase complete. Starting again from the top');
+}
+function renderPhrase(){
+  const box=$('phrase-view'); if(S.mode!=='harm'||!harm.notes.length){ box.innerHTML=''; return; }
+  const cell=(t,k)=>`<span class="n${k===harm.i?' cur':k<harm.i?' done':''}">${t}</span>`;
+  const mel=harm.notes.map((n,k)=>cell(solOf(idxDeg(n).d),k)).join('');
+  const mine=harm.notes.map((n,k)=>cell(solOf(idxDeg(n+HARM_OFF[S.harmIv]).d),k)).join('');
+  box.innerHTML=`<div class="ln"><span class="lb">${tr('旋律','MELODY')}</span>${mel}</div><div class="ln"><span class="lb">${tr('あなた','YOU')}</span>${mine}</div>`;
+  const cur=box.querySelector('.n.cur'); if(cur) cur.scrollIntoView({block:'nearest',inline:'center'});
+}
+
+const ratioLine=d=>{
   const diff=c=>{const x=c-d.just, v=`${x>0?'+':''}${x.toFixed(1)}`; return tr(`(純正との差 ${v})`,` (vs. just ${v})`);};
-  $('ratio').textContent=
-    S.tuning==='just' ? tr(`純正 ${d.p}:${d.q} / ${d.just.toFixed(1)} cent`,`Just ${d.p}:${d.q} / ${d.just.toFixed(1)} cents`)
+  return S.tuning==='just' ? tr(`純正 ${d.p}:${d.q} / ${d.just.toFixed(1)} cent`,`Just ${d.p}:${d.q} / ${d.just.toFixed(1)} cents`)
     : S.tuning==='pyth' ? tr(`ピタゴラス ${d.pp}:${d.pq} / ${d.pyth.toFixed(1)} cent`,`Pythagorean ${d.pp}:${d.pq} / ${d.pyth.toFixed(1)} cents`)+diff(d.pyth)
     : tr(`平均律 ${d.et} cent`,`Equal ${d.et} cents`)+diff(d.et);
+};
+// チューナー: その音が平均律(基準ピッチの A から測った高さ)から何セントずれるか
+const etOffset=d=>targetCents(d)-d.et+anchorShift();
+const signed=v=>`${v>0.05?'+':v<-0.05?'−':'±'}${Math.abs(v).toFixed(1)}`;
+const tunerLine=d=>tr(`${optText('tuning')} ${S.tuning==='et'?'':ratioOf(d)+' · '}平均律より ${signed(etOffset(d))} セント`,
+  `${optText('tuning')} ${S.tuning==='et'?'':ratioOf(d)+' · '}${signed(etOffset(d))} cents from equal`);
+const ratioOf=d=>S.tuning==='just'?`${d.p}:${d.q}`:S.tuning==='pyth'?`${d.pp}:${d.pq}`:'';
+function showTarget(){
+  const m=S.mode, open=m==='free'||m==='tuner';
+  $('sol').classList.toggle('free',open);
+  renderPhrase();
+  if(open){
+    setMarkDeg(null); $('sol').textContent='—';
+    $('deg').textContent=m==='free'?tr('自由に歌う','Free singing'):tr('チューナー','Tuner');
+    $('ratio').textContent=m==='free'?tr('いちばん近い音とのずれを表示します','Shows the deviation from the nearest note')
+      :tr('いちばん近い音の、この調・音律での高さとのずれを表示します','Shows the deviation from the nearest note as tuned in this key');
+    return;
+  }
+  const d=target; setMarkDeg(d);
+  $('sol').textContent=solOf(d);
+  if(m==='harm'){
+    const md=idxDeg(harm.notes[harm.i]).d, [ja,en]=HARM_NAME[S.harmIv];
+    $('deg').textContent=tr(`旋律「${md.sol}」の${ja}`,`${en} the melody's ${md.solE}`);
+  }else{
+    const ci=chordOn()?chordInfo():null;
+    $('deg').textContent=ci&&d.role?tr(`${ci.sym}(${ci.name})の${d.role[0]}・${d.name}`,`${d.role[1]} of ${ci.sym} (${ci.name}) · ${d.nameE}`):degLine(d);
+  }
+  $('ratio').textContent=ratioLine(d);
 }
-// 目標を主音(ド)にする。音階順のときは、続けて「次の音」を押すとドの隣へ進む
-function tonicTarget(){
-  const list=SETS[S.set]; seqIdx=list.indexOf(0); lastS=0;
-  target=DEGREES[0]; resetHold(); $('flash').textContent=''; $('flash').className='flash';
-  showTarget(); buildLadder();
-  const el=$('sol'); el.classList.remove('enter','hit'); void el.offsetWidth; el.classList.add('enter');
+
+/* ---------- 練習の種類 ---------- */
+const MODE_NOTES={
+  quiz:['指定された音をドローンに合わせて歌います。伴奏の和音を選ぶと、その和音の構成音を出題します。','Sing the note shown against the drone. Choose an accompanying chord to be asked its chord tones.'],
+  harm:['アプリが旋律を鳴らします。下の段の音を歌って、旋律にハモってください。','The app plays a melody. Sing the notes in the lower row to harmonize with it.'],
+  free:['目標を決めずに歌い、いちばん近い音とのずれを表示します。','Sing without a target; shows the deviation from the nearest note.'],
+  tuner:['楽器の音を調に合わせます。各音を平均律から何セントずらすかも表で示します。','Tune your instrument to the key. The table shows how many cents each note differs from equal temperament.'],
+};
+function labelMode(){ const [ja,en]=MODE_NOTES[S.mode]; $('modeNote').textContent=tr(ja,en); }
+function labelQuizBtns(){
+  const harmM=S.mode==='harm', noDo=!harmM&&!pool().some(d=>d.s===0);
+  $('tonicBtn').innerHTML=(harmM?tr('最初から','From the top'):noDo?tr('根音に戻る','Back to root'):tr('主音に戻る','Back to tonic'))+' <kbd>T</kbd>';
+  $('nextBtn').innerHTML=tr('次の音','Next note')+' <kbd>N</kbd>';
+}
+function applyMode(){
+  document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
+  document.querySelectorAll('[data-modes]').forEach(el=>{ el.hidden=!el.dataset.modes.split(' ').includes(S.mode); });
+  labelMode(); labelQuizBtns();
+  if(S.mode==='tuner') renderTuner();
 }
 function setMode(m){
   if(S.mode===m) return;
-  S.mode=m; saveSettings();
-  $('freeBtn').setAttribute('aria-pressed',m==='free');
-  resetHold(); $('flash').textContent=''; showTarget(); buildLadder();
+  S.mode=m; saveSettings(); applyMode();
+  resetHold(); streak=0; refreshDrone();
+  restartTargets(); syncMelody(); renderStats();
 }
-// 「次の音」「主音に戻る」は、自由に歌っている途中でも押せば出題に戻る
-function goNext(){ streak=0; setMode('quiz'); nextTarget(); }
-function goTonic(){ streak=0; setMode('quiz'); tonicTarget(); }
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+// 「次の音」「主音に戻る」は、自由に歌う・チューナーの途中でも押せば出題に戻る
+function goNext(){ streak=0; if(S.mode==='harm') harmAdvance(); else if(S.mode!=='quiz') setMode('quiz'); else nextTarget(); }
+function goTonic(){ streak=0; if(S.mode==='harm'){ startPhrase(); return; } if(S.mode!=='quiz') setMode('quiz'); tonicTarget(); }
 $('nextBtn').onclick=goNext;
 $('tonicBtn').onclick=goTonic;
-$('freeBtn').onclick=()=>setMode(S.mode==='free'?'quiz':'free');
+
+/* ---------- チューナーの表 ---------- */
+function renderTuner(){
+  if(S.mode!=='tuner') return;
+  const t=tonicHz();
+  $('tunerTitle').textContent=tr(`${KEYS[S.key]} を主音とする${optText('tuning')}の各音(周波数は主音から1オクターヴ内)`,
+    `Each note with ${KEYS[S.key]} as tonic, in ${optText('tuning')} (frequencies within one octave above the tonic)`);
+  $('tunerRows').innerHTML=DEGREES.map(d=>`<tr><td>${NOTE_NAMES[(S.key+d.s)%12]}</td><td>${nameOf(d)}</td><td class="mono">${ratioOf(d)||'—'}</td>`
+    +`<td class="n">${signed(etOffset(d))}</td><td class="n">${(t*Math.pow(2,targetCents(d)/1200)).toFixed(2)} Hz</td></tr>`).join('');
+}
 
 /* ---------- Ladder ---------- */
 function buildLadder(){
   const L=$('ladder'); L.querySelectorAll('.tick,.voice').forEach(e=>e.remove());
-  const set=SETS[S.set];
-  [...set,12].forEach(s=>{
-    const d=DEGREES[s%12], c=s===12?1200:targetCents(d);
-    const t=document.createElement('div'); t.className='tick';
-    if(S.mode==='quiz'&&target&&target.s===s%12) t.classList.add('on');
+  const aim=S.mode==='quiz'||S.mode==='harm';
+  const items=(S.mode==='harm'?harmScale().map(s=>DEGREES[s]):pool()).map(d=>aim&&target&&target.s===d.s?target:d);
+  const ticks=items.map(d=>({d,c:targetCents(d),on:aim&&target&&target.s===d.s}));
+  if(!chordOn()) ticks.push({d:DEGREES[0],c:1200,on:aim&&target&&target.s===0});
+  ticks.forEach(({d,c,on})=>{
+    const t=document.createElement('div'); t.className='tick'+(on?' on':'');
     t.style.left=(c/1200*100)+'%'; t.innerHTML=`<b></b><span>${solOf(d)}</span>`; L.appendChild(t);
   });
   const v=document.createElement('div'); v.className='voice'; v.id='voice'; v.hidden=true; L.appendChild(v);
@@ -810,7 +1071,7 @@ function drawTrace(now){
 /* ---------- Main loop ---------- */
 function nearestDegree(cFromTonic){
   let best=null, bd=1e9;
-  SETS[S.set].forEach(s=>{const d=DEGREES[s], dv=wrap(cFromTonic-targetCents(d)); if(Math.abs(dv)<Math.abs(bd)){bd=dv; best=d;}});
+  pool().forEach(d=>{const dv=wrap(cFromTonic-targetCents(d)); if(Math.abs(dv)<Math.abs(bd)){bd=dv; best=d;}});
   return {d:best, dev:bd};
 }
 function loop(){
@@ -822,11 +1083,14 @@ function loop(){
     const fromTonic=1200*Math.log2(f/tonicHz());
     const pos=((fromTonic%1200)+1200)%1200;
     voice.hidden=false; voice.style.left=(pos/1200*100)+'%';
-    if(S.mode==='free'){ const n=nearestDegree(fromTonic); dev=n.dev; setMarkDeg(n.d); $('sol').textContent=solOf(n.d); $('deg').textContent=degLine(n.d); }
+    if(S.mode==='free'||S.mode==='tuner'){
+      const n=nearestDegree(fromTonic); dev=n.dev; setMarkDeg(n.d);
+      if(S.mode==='free'){ $('sol').textContent=solOf(n.d); $('deg').textContent=degLine(n.d); }
+      else { $('sol').textContent=NOTE_NAMES[(S.key+n.d.s)%12]; $('deg').textContent=degLine(n.d); $('ratio').textContent=tunerLine(n.d); }
+    }
     else dev=wrap(fromTonic-targetCents(target));
     const midi=69+12*Math.log2(f/A4), nm=Math.round(midi);
-    const names=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-    const nn=names[(nm%12+12)%12]+(Math.floor(nm/12)-1);
+    const nn=NOTE_NAMES[(nm%12+12)%12]+(Math.floor(nm/12)-1);
     $('hz').textContent=`${f.toFixed(1)} Hz`+tr(`(${nn})`,` (${nn})`);
     $('cents').textContent=(dev>0?'+':dev<0?'−':'±')+Math.abs(dev).toFixed(1);
     const cl=Math.abs(dev)<=S.tol?'var(--good)':Math.abs(dev)<=S.tol*2?'var(--warn)':'var(--bad)';
@@ -838,7 +1102,7 @@ function loop(){
   trace.push({t:now,c:dev});
   drawTrace(now);
 
-  if(S.mode==='quiz'&&!locked){
+  if((S.mode==='quiz'||S.mode==='harm')&&!locked){
     if(dev!=null&&Math.abs(dev)<=S.tol){
       if(!holdStart) holdStart=now; lastIn=now; holdDevs.push(dev);
       const p=Math.min(1,(now-holdStart)/S.hold); $('holdBar').style.width=(p*100)+'%';
@@ -862,7 +1126,7 @@ function chime(){
 }
 function pass(){
   const avg=holdDevs.reduce((a,b)=>a+b,0)/holdDevs.length;
-  addStat(target.s,avg);
+  if(S.mode==='quiz') addStat(target.s,avg);
   const now=performance.now(); passMarks.push({t:now,len:S.hold}); passFlashT=now; streak++;
   $('flash').className='flash ok';
   const av=`${avg>0?'+':''}${avg.toFixed(1)}`;
@@ -874,23 +1138,28 @@ function pass(){
   const wait=S.auto?1400:900;
   setTimeout(()=>{
     $('badge').classList.remove('show'); document.querySelector('.bench').classList.remove('passed'); $('sol').classList.remove('hit');
-    locked=false; if(S.auto&&S.mode==='quiz') nextTarget(); else resetHold();
+    locked=false;
+    if(S.auto&&S.mode==='quiz') nextTarget(); else if(S.auto&&S.mode==='harm') harmAdvance(); else resetHold();
   },wait);
 }
 
 /* ---------- Stats ---------- */
 let stats={};
 try{stats=JSON.parse(localStorage.getItem('drone-stats')||'{}');}catch(e){}
+// 和音を伴奏にした記録は、和音ごとに分けて残す(同じレでもⅤとⅡmでは目標の高さが違うため)
+const statKey=s=>S.tuning+(chordOn()?':'+S.chord:'')+':'+s;
 function addStat(s,avg){
-  const k=S.tuning+':'+s, r=stats[k]||{n:0,sum:0,abs:0};
+  const k=statKey(s), r=stats[k]||{n:0,sum:0,abs:0};
   r.n++; r.sum+=avg; r.abs+=Math.abs(avg); stats[k]=r;
   try{localStorage.setItem('drone-stats',JSON.stringify(stats));}catch(e){}
   renderStats();
 }
 function renderStats(){
-  $('stats').innerHTML=SETS[S.set].map(s=>{
-    const d=DEGREES[s], r=stats[S.tuning+':'+s];
-    const nm=tr(`${d.sol}(${d.name})`,`${d.solE} (${d.nameE})`);
+  const ci=chordOn()?chordInfo():null;
+  $('statsNote').textContent=ci?tr(`${ci.sym}(${ci.name})の上で歌った記録です。`,`Record for singing over ${ci.sym} (${ci.name}).`):'';
+  $('stats').innerHTML=pool().map(d=>{
+    const r=stats[statKey(d.s)];
+    const nm=d.role?tr(`${d.sol}(${d.role[0]})`,`${d.solE} (${d.role[1]})`):tr(`${d.sol}(${d.name})`,`${d.solE} (${d.nameE})`);
     if(!r) return `<tr><td>${nm}</td><td class="n">0</td><td class="n">—</td><td class="n">—</td></tr>`;
     const bias=r.sum/r.n;
     const tend=Math.abs(bias)<1.5?tr('ほぼ中心','centered'):bias>0?tr('高め','sharp'):tr('低め','flat');
@@ -939,8 +1208,8 @@ $('a4').addEventListener('input',e=>{const v=parseFloat(e.target.value); if(v>=4
 $('a4').addEventListener('change',e=>setA4(parseFloat(e.target.value)||440));
 $('a4down').onclick=()=>setA4(A4-0.5);
 $('a4up').onclick=()=>setA4(A4+0.5);
-function onA4Change(){ refreshDrone(); updateSummary(); labelAnchor(); }
-function onAnchorChange(){ refreshDrone(); updateSummary(); labelAnchor(); }
+function onA4Change(){ refreshDrone(); updateSummary(); labelAnchor(); renderTuner(); }
+function onAnchorChange(){ refreshDrone(); updateSummary(); labelAnchor(); renderTuner(); }
 // 今の設定で主音と A が何 Hz になるかを示す
 function labelAnchor(){
   const t=tonicHz(), sh=anchorShift(), key=KEYS[S.key], d=DEGREES[(9-S.key+12)%12];
@@ -952,7 +1221,7 @@ function labelAnchor(){
 
 /* ---------- 設定画面 ---------- */
 const dlg=$('settingsDlg');
-const optText=id=>{const el=$(id); return el.options[el.selectedIndex].text.replace(/\(.*\)$/,'').trim();};
+const optText=id=>{const el=$(id), o=el.options[el.selectedIndex]; return !o?'':o.text.replace(/\(.*\)$/,'').trim();};
 // 設定ボタンの横に、隠れている設定の今の値を1行で出す
 function updateSummary(){
   $('setSum').textContent=[`A4=${A4}`+(S.anchor==='tuned'?tr('(音律のA)',' (tuned A)'):''), optText('timbre'), optText('dronemode'), tr(`±${S.tol}セント`,`±${S.tol} cents`), tr(`${S.hold/1000}秒`,`${S.hold/1000} s`),
@@ -966,13 +1235,16 @@ dlg.addEventListener('change',updateSummary);
 dlg.addEventListener('close',()=>$('openSettings').focus());
 
 /* ---------- Init ---------- */
-$('freeBtn').setAttribute('aria-pressed',S.mode==='free');
+// 「使い方」のリンクで解説を開く(言語切替で中身が書き換わっても効くように、文書全体で受ける)
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('a.toguide')) $('guide').open=true; });
+applyMode();
 labelMicBtn(); labelDroneBtn(); labelResetStats(); $('hz').textContent=tr('声を待っています','Waiting for your voice');
 setStatus('ヘッドホンの使用をおすすめします。スピーカーから出たドローンをマイクが拾うと、測定が乱れます。',
   'Headphones are recommended. If the mic picks up the drone from speakers, the measurement gets disturbed.');
 // 言語を切り替えたら、JS で作った表示を書き直す
 onLang(()=>{
   labelMicBtn(); labelDroneBtn(); renderStatus(); labelA4Presets(); updateSummary(); labelAnchor(); renderMarks();
+  buildChordOpts(); buildPhraseOpts(); labelMode(); labelQuizBtns(); renderTuner();
   delete $('resetStats').dataset.confirm; labelResetStats(); $('resetMsg').textContent='';
   $('flash').textContent=''; showTarget(); buildLadder(); renderStats();
   if(!micOn) $('hz').textContent=tr('声を待っています','Waiting for your voice');
@@ -980,7 +1252,7 @@ onLang(()=>{
 // テーマを切り替えたら、グラフを今の色で描き直す(マイク使用中は毎フレーム描くので不要)
 onTheme(()=>{ if(!micOn) drawTrace(performance.now()); });
 setA4(A4);
-updateSummary(); drawZones(); resetSeq(); nextTarget(); renderStats(); drawTrace(performance.now());
+updateSummary(); drawZones(); resetSeq(); if(S.mode==='harm') startPhrase(); else restartTargets(); renderStats(); drawTrace(performance.now());
 </script>
 <script>
 /* オフラインでも使えるようにする(PWA) */

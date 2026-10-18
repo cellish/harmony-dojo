@@ -91,7 +91,19 @@ th.n{text-align:right}
 .hist{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:13px}
 .hist div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-block:4px}
 .hist .empty{color:var(--muted);font-family:var(--body);border:0}
-section h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:600}
+section h2,.fold h2{font-family:var(--display);font-size:18px;margin:0 0 8px;font-weight:600}
+.fold h3{font-size:14px;font-weight:700;margin:12px 0 6px;color:var(--muted);letter-spacing:.06em}
+/* 畳める見出し */
+.fold summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.fold summary::-webkit-details-marker{display:none}
+.fold summary::before{content:"▶";color:var(--muted);font-size:11px;line-height:1;transition:transform .15s}
+.fold[open] summary::before{transform:rotate(90deg)}
+.fold summary h2{display:inline;margin:0}
+.fold summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:4px}
+header a{color:var(--brass)}
+[hidden]{display:none!important}
+/* 練習の本体の中では、音程カードを枠なしで見出しとして置く */
+.bench .ivcard{margin-top:4px;border:0;padding:0;background:none}
 
 /* 設定ボタンと、押すと開く設定画面(スマホでは下から出るシート) */
 .pickhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -159,33 +171,9 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
 <div class="wrap">
   <header>
     <h1 data-en="Harmony Dojo: Listen">ハモリ道場：聴く</h1>
-    <div class="en" data-en="ハモリ道場：聴く">Harmony Dojo: Listen</div>
-    <p data-en="Play two notes together and move the upper one bit by bit to find the point where the “wah-wah” beating stops. That is the sound of a just interval.">二つの音を同時に鳴らし、上の音を少しずつ動かして「ワンワン」という唸りが止まる点を探します。そこが純正の響きです。</p>
+    <p data-en='Play two notes together and move the upper one bit by bit to find the point where the “wah-wah” beating stops. That is the sound of a just interval. <a href="#guide" class="toguide">Equal vs. just</a>'>二つの音を同時に鳴らし、上の音を少しずつ動かして「ワンワン」という唸りが止まる点を探します。そこが純正の響きです。<a href="#guide" class="toguide">平均律と純正のずれ</a></p>
   </header>
 
-
-  <div>
-    <div class="pickhead"><div class="label" data-en="Question mode">出題のしかた</div>
-      <div class="setbox"><span class="setsum" id="setSum"></span>
-        <button class="btn" type="button" id="openSettings" aria-haspopup="dialog" data-en="⚙ Settings">⚙ 設定</button></div></div>
-    <div class="chips" id="picks">
-      <button class="chip" type="button" id="pick-fixed" aria-pressed="true" data-en="Chosen interval">選んだ音程</button>
-      <button class="chip" type="button" id="pick-random" aria-pressed="false" data-en="Random">ランダム</button>
-      <button class="chip" type="button" id="pick-weak" aria-pressed="false" data-en="Focus on weak spots">苦手を重点</button>
-    </div>
-    <p class="note" id="pickNote" style="margin-top:6px;max-width:none"></p>
-  </div>
-
-  <div>
-    <div class="label" id="ivLabel">音程を選ぶ</div>
-    <div class="ivcard">
-      <div class="ivread"><span class="nm" id="ivName">長3度</span><span class="ab" id="ivAb">M3</span><span class="rt" id="ivRatio">5:4</span><span class="st" id="ivSemi">半音 4 個</span></div>
-      <div class="ivtrack" id="ivTrack"><div class="line"></div><div class="fill" id="ivFill"></div>
-        <div class="knob" id="ivKnob" role="slider" tabindex="0" aria-label="音程" data-en-aria-label="Interval" aria-valuemin="1" aria-valuemax="12"></div></div>
-      <div class="steps"><button class="btn" type="button" id="ivDown" data-en="◀ Narrower">◀ 狭く</button><button class="btn" type="button" id="ivUp" data-en="Wider ▶">広く ▶</button>
-        <span class="status hint" data-en="Tap a tick to jump to that interval. With the knob focused, the ← → keys also work.">目盛りを押すとその音程へ。つまみを選べば ← → キーでも動かせます</span></div>
-    </div>
-  </div>
 
   <!-- 一度決めたらあまり触らない設定はここにまとめる -->
   <dialog id="settingsDlg" aria-labelledby="dlgTitle">
@@ -222,6 +210,28 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
   </dialog>
 
   <div class="bench">
+    <div>
+      <div class="pickhead"><div class="label" data-en="Question mode">出題のしかた</div>
+        <div class="setbox"><span class="setsum" id="setSum"></span>
+          <button class="btn" type="button" id="openSettings" aria-haspopup="dialog" data-en="⚙ Settings">⚙ 設定</button></div></div>
+      <div class="chips" id="picks">
+        <button class="chip" type="button" id="pick-fixed" aria-pressed="true" data-en="Chosen interval">選んだ音程</button>
+        <button class="chip" type="button" id="pick-random" aria-pressed="false" data-en="Random">ランダム</button>
+        <button class="chip" type="button" id="pick-weak" aria-pressed="false" data-en="Focus on weak spots">苦手を重点</button>
+      </div>
+      <p class="note" id="pickNote" style="margin-top:6px;max-width:none"></p>
+    </div>
+
+    <div id="ivBox">
+      <div class="label" id="ivLabel">音程を選ぶ</div>
+      <div class="ivcard">
+        <div class="ivread"><span class="nm" id="ivName">長3度</span><span class="ab" id="ivAb">M3</span><span class="rt" id="ivRatio">5:4</span><span class="st" id="ivSemi">半音 4 個</span></div>
+        <div class="ivtrack" id="ivTrack"><div class="line"></div><div class="fill" id="ivFill"></div>
+          <div class="knob" id="ivKnob" role="slider" tabindex="0" aria-label="音程" data-en-aria-label="Interval" aria-valuemin="1" aria-valuemax="12"></div></div>
+        <div class="steps"><button class="btn" type="button" id="ivDown" data-en="◀ Narrower">◀ 狭く</button><button class="btn" type="button" id="ivUp" data-en="Wider ▶">広く ▶</button>
+          <span class="status hint" data-en="Tap a tick to jump to that interval. With the knob focused, the ← → keys also work.">目盛りを押すとその音程へ。つまみを選べば ← → キーでも動かせます</span></div>
+      </div>
+    </div>
     <div class="q">
       <div class="big" id="qname">長3度</div>
       <div class="meta" id="qmeta"></div>
@@ -275,33 +285,34 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
     </div>
   </div>
 
-  <section>
-    <h2 data-en="Recent results">最近の記録</h2>
+  <details class="fold" id="recFold" open>
+    <summary><h2 data-en="Record">記録</h2></summary>
+    <h3 data-en="Recent results">最近の記録</h3>
     <div class="hist" id="hist"></div>
-  </section>
 
-  <section>
-    <h2 data-en="Results by interval">音程別の成績</h2>
+    <h3 data-en="Results by interval">音程別の成績</h3>
     <div style="overflow-x:auto"><table>
       <thead><tr><th data-en="Interval">音程</th><th class="n" data-en="Tries">回数</th><th class="n" data-en="Recent error">最近の誤差</th><th class="n" data-en="Chance in “Focus”">重点出題の確率</th></tr></thead>
       <tbody id="stats"></tbody>
     </table></div>
     <p class="note" style="margin-top:10px" data-en="Only the first “Lock in” of each question is recorded (retries do not count). “Recent error” is an average that weights newer results more. “Focus on weak spots” picks intervals with larger errors, and ones you have not tried yet, more often.">各問題の最初の「決定」だけを記録します(やり直し後は数えません)。「最近の誤差」は新しい結果ほど重く見た平均です。「苦手を重点」では誤差の大きい音程と、まだ解いていない音程が多めに出ます。</p>
     <div class="row" style="margin-top:8px"><button class="btn" id="resetStats" data-en="Clear results">成績を消去</button></div>
-  </section>
+  </details>
 
-  <section>
-    <h2 data-en="Equal temperament vs. just intonation">平均律と純正のずれ</h2>
+  <details class="fold" id="guide">
+    <summary><h2 data-en="Equal temperament vs. just intonation">平均律と純正のずれ</h2></summary>
     <div style="overflow-x:auto"><table>
       <thead><tr><th data-en="Interval">音程</th><th data-en="Just">純正</th><th class="n" data-en="vs. equal">平均律との差</th><th data-en="Pythagorean">ピタゴラス</th><th class="n" data-en="vs. equal">平均律との差</th></tr></thead>
       <tbody id="tbl"></tbody>
     </table></div>
     <p class="note" style="margin-top:10px" data-en="A negative difference means the just interval sits lower than equal temperament. A major third tuned about 14 cents low makes the beating disappear, which is why choirs are told to sing major thirds “a little low”. The minor seventh is calculated as 9:5 (some use 16:9, which sits about 4 cents below equal temperament). For the tritone we use 7:5, where you can actually hear the beating disappear; the textbook 45:32 involves overtones too high to tune by beats. Pythagorean tuning is built by stacking only perfect fifths (3:2); its major 3rd, major 6th and major 7th are about 22 cents higher than just, and its minor 3rd and minor 6th about 22 cents lower. In melodies this gives a bright tension, with the leading tone pulled strongly toward the tonic, but stacked as chords it leaves beating. Adding octaves does not change how far the just and Pythagorean positions deviate.">差がマイナスなら、純正は平均律より低い位置にあります。長3度は約14セント低く取ると唸りが消えます。合唱で長3度を「少し低めに」と言われるのはこのためです。短7度は 9:5 で計算しています(16:9 とする流儀もあり、そちらは平均律より約4セント低い位置になります)。トライトーンは、唸りが実際に消える点として聴き取れる 7:5 を使っています。教科書的な 45:32 は倍音の重なりが高すぎて、唸りで合わせることができません。ピタゴラス音律は完全5度(3:2)だけを積み重ねて作る音律で、長3度・長6度・長7度は純正より約22セント高く、短3度・短6度は約22セント低くなります。旋律では導音が主音に強く引き寄せられる張りのある響きになる一方、和音として重ねると唸りが残ります。オクターヴを足しても、純正やピタゴラスの位置のずれ方は同じです。</p>
-  </section>
+  </details>
 </div>
 
 <script>
 applyLang();
+// 見出しの「平均律と純正のずれ」リンクで解説を開く(言語切替で中身が書き換わっても効くように、文書全体で受ける)
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('a.toguide')) document.getElementById('guide').open=true; });
 // nameE/subE/kindE は英語表示用
 const INTERVALS=[
   {id:'m2',name:'短2度',kind:'短',nameE:'Minor 2nd',kindE:'Minor',num:2,p:16,q:15,et:100,pp:256,pq:243},
@@ -548,8 +559,14 @@ try{const p=localStorage.getItem('unari-pick'); if(PICKS.includes(p)) pick=p;}ca
 function setPick(p){
   pick=p; try{localStorage.setItem('unari-pick',p);}catch(e){}
   PICKS.forEach(q=>$('pick-'+q).setAttribute('aria-pressed',q===pick));
-  labelPick();
+  labelPick(); showQName();
   renderStats();
+}
+/* 「選んだ音程」では音程カードが問題を兼ねるので、問題名はオクターヴを足したときだけ出す。
+   ランダム・苦手を重点では音程カードを隠し、問題名だけを出す */
+function showQName(){
+  $('ivBox').hidden=pick!=='fixed';
+  $('qname').hidden=pick==='fixed'&&oct===0;
 }
 function labelPick(){
   $('ivLabel').textContent=pick==='fixed'?tr('音程を選ぶ','Choose an interval')
@@ -582,7 +599,7 @@ function newQuestion(reroll=true){
   [0,1,2].forEach(k=>$('oct-'+k).setAttribute('aria-pressed',k===oct));
   ['upper','lower'].forEach(m=>$('mode-'+m).setAttribute('aria-pressed',m===mode));
   $('knobLabel').textContent=mode==='upper'?tr('上の音を調整','Adjust the upper note'):tr('下の音を調整','Adjust the lower note');
-  $('qname').textContent=cur.full;
+  $('qname').textContent=cur.full; showQName();
   $('qmeta').textContent=noteLabel();
   renderStats();
   beginAttempt();
