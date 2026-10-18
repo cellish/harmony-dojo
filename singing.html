@@ -158,6 +158,14 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
 .hold i{transition:background .2s}
 .flash .streak{font-family:var(--mono);font-size:14px;color:var(--muted);margin-left:10px;font-weight:400}
 @media (prefers-reduced-motion:reduce){.sol.enter{animation:none}.sol.hit{transform:none}}
+/* スマホでは「練習を始める・お手本・次の音」を画面下に固定し、メーターを見ながら押せるようにする */
+@media (max-width:640px){
+  .dock{position:fixed;left:0;right:0;bottom:0;z-index:30;flex-wrap:nowrap;margin:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    background:color-mix(in srgb, var(--panel) 94%, transparent);backdrop-filter:blur(6px);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .dock .btn{flex:1 1 0;min-width:0;white-space:nowrap;padding:12px 4px}
+  .dock kbd{display:none}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+}
 .volbox{display:flex;align-items:center;gap:8px}
 .volbox input{width:140px}
 @media (max-width:480px){.sol{font-size:56px}.readout{margin-left:0;text-align:left}}
@@ -177,6 +185,8 @@ header a{color:var(--brass)}
 .phrase .n{min-width:2.1em;text-align:center;color:var(--muted);border-radius:6px}
 .phrase .n.done{color:var(--ink)}
 .phrase .n.cur{color:var(--panel);background:var(--brass);font-weight:700}
+.phrase .pn{font-size:13px;color:var(--muted);white-space:normal}
+.phrase .pn b{color:var(--brass)}
 .tips{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:14px}
 .tips b{color:var(--ink)}
 .mono{font-family:var(--mono)}
@@ -202,6 +212,7 @@ header a{color:var(--brass)}
       <div class="field"><label class="label" for="key" data-en="Tonic">主音</label><select id="key"></select></div>
       <div class="field" data-modes="quiz harm free"><label class="label" for="set" data-en="Scale">音階</label>
         <select id="set"><option value="major" data-en="Major scale">長音階</option><option value="minor" data-en="Minor scale (natural)">短音階(自然)</option><option value="chrom" data-en="All 12 semitones">半音階すべて</option></select></div>
+      <div class="field" data-modes="quiz"><label class="label" for="prog" data-en="Chord progression">和音の進行</label><select id="prog"></select></div>
       <div class="field" data-modes="quiz free"><label class="label" for="chord" data-en="Accompanying chord">伴奏の和音</label><select id="chord"></select></div>
       <div class="field" data-modes="quiz"><label class="label" for="order" data-en="Order">出題の順番</label>
         <select id="order"><option value="random" data-en="Random">ランダム</option><option value="up" data-en="Ascending scale">上行音階</option><option value="down" data-en="Descending scale">下行音階</option></select></div>
@@ -271,8 +282,12 @@ header a{color:var(--brass)}
   </dialog>
 
   <div class="bench">
-    <div class="row">
+    <div class="row dock">
       <button class="btn primary" id="startBtn"></button>
+      <button class="btn" id="hintBtn" data-modes="quiz harm" data-en="Hear it <kbd>H</kbd>">お手本 <kbd>H</kbd></button>
+      <button class="btn" id="nextBtn" data-modes="quiz harm"></button>
+    </div>
+    <div class="row">
       <button class="chip" type="button" id="micBtn" aria-pressed="false"></button>
       <button class="chip" type="button" id="droneBtn" aria-pressed="false"></button>
       <label class="volbox"><span class="label" data-en="Volume">音量</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
@@ -285,8 +300,6 @@ header a{color:var(--brass)}
     </div>
     <div class="row" id="quizBtns" data-modes="quiz harm">
       <button class="btn" id="tonicBtn"></button>
-      <button class="btn" id="nextBtn"></button>
-      <button class="btn" id="hintBtn" data-en="Hear the note <kbd>H</kbd>">お手本を聴く <kbd>H</kbd></button>
       <label class="status" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="auto" checked> <span data-en="Auto-advance on pass">合格したら自動で次へ</span></label>
     </div>
 
@@ -296,6 +309,7 @@ header a{color:var(--brass)}
       <div class="readout"><div class="c" id="cents">—</div><div class="hz" id="hz"></div></div>
     </div>
     <div class="phrase" id="phrase-view" data-modes="harm"></div>
+    <div class="phrase" id="prog-view" data-modes="quiz"></div>
 
     <div>
       <div class="meter" id="meter"><div class="zone" id="zoneWarn"></div><div class="zone" id="zoneGood"></div><div class="mid"></div><div id="tmarks"></div><div class="needle" id="needle" hidden></div></div>
@@ -343,8 +357,8 @@ header a{color:var(--brass)}
         <b>耳を慣らす</b>：まずドローンだけを鳴らして主音(ド)を歌うと安定します。オクターヴはどこで歌っても構いません。</li>
       <li data-en="<b>Just intonation</b>: at the right spot your voice melts into the drone and the beating disappears. Pythagorean tuning stacks pure fifths only; its thirds and sixths are much wider than just (a major third is about 22 cents higher), and the leading tone (Ti) feels strongly pulled toward the tonic.">
         <b>純正とピタゴラス</b>：純正で合わせると、正しい位置で声がドローンに溶け込み、うなりが消えます。ピタゴラス音律は5度だけを積み重ねた音律で、3度と6度が純正よりかなり広く(長3度で約22セント高く)、導音(シ)が主音に強く引き寄せられます。</li>
-      <li data-en="<b>Accompanying chord</b>: the right height of a note depends on the chord underneath. In C major, Re is 9:8 above Do over the V chord (G–B–D) but 10:9 over the ii chord (D–F–A), 21.5 cents lower. Choose a chord and you will be asked to sing its chord tones in just intonation.">
-        <b>伴奏の和音</b>：同じ音でも、下で鳴る和音によって正しい高さが変わります。ハ長調のレは、Ⅴの和音(ソ・シ・レ)の上では主音から 9:8、Ⅱの和音(レ・ファ・ラ)の上では 10:9 で、21.5セント低くなります。和音を選ぶと、その和音の構成音を純正で出題します。</li>
+      <li data-en="<b>Accompanying chord</b>: the right height of a note depends on the chord underneath. In C major, Re is 9:8 above Do over the V chord (G–B–D) but 10:9 over the ii chord (D–F–A), 21.5 cents lower. Choose a chord and you will be asked to sing its chord tones in just intonation. Choose a chord progression and each pass moves on to the next chord, asking for the chord tone closest to your previous note; where the same note name continues, as in ii→V, you will feel its pitch shift.">
+        <b>伴奏の和音</b>：同じ音でも、下で鳴る和音によって正しい高さが変わります。ハ長調のレは、Ⅴの和音(ソ・シ・レ)の上では主音から 9:8、Ⅱの和音(レ・ファ・ラ)の上では 10:9 で、21.5セント低くなります。和音を選ぶと、その和音の構成音を純正で出題します。「和音の進行」を選ぶと、合格するたびに次の和音へ進み、前の音にいちばん近い構成音を出題します。Ⅱm→Ⅴ のように同じ音名が続くところで、高さがずれるのを体験できます。</li>
       <li data-en="<b>Harmony</b>: the app plays a melody and you sing a 3rd or 6th against it. The target is the height that forms a pure interval with the melody note, so it can differ slightly from the scale note sung over the drone alone.">
         <b>ハモリ</b>：アプリが旋律を鳴らし、あなたは3度や6度でハモります。目標は旋律の音と純正の音程になる高さなので、ドローンだけに合わせたときの音階の高さとわずかに違うことがあります。</li>
       <li data-en="<b>Tuner</b>: for setting your instrument to the key. The table shows how many cents each note of the chosen key and tuning differs from equal temperament.">
@@ -398,6 +412,11 @@ const CHORDS={
   minor:[['i','Ⅰm',0,[1,1]],['iv','Ⅳm',3,[4,3]],['v','Ⅴm',4,[3,2]],['III','Ⅲ',2,[6,5]],['VI','Ⅵ',5,[8,5]]],
 };
 const CHORD_ROLES=[['根音','Root'],['第3音','3rd'],['第5音','5th']];
+/* 和音の進行(出題のときだけ)。合格するたびに次の和音へ進む */
+const PROGS={
+  major:[['I-IV-V-I',['I','IV','V','I']],['I-vi-ii-V-I',['I','vi','ii','V','I']],['ii-V-I',['ii','V','I']]],
+  minor:[['i-iv-v-i',['i','iv','v','i']],['i-VI-iv-v-i',['i','VI','iv','v','i']]],
+};
 
 /* ハモリの旋律: 音階の何番目か(0=主音、7=1オクターヴ上の主音) */
 const PHRASES=[
@@ -414,7 +433,7 @@ const HARM_NAME={d3:['3度下','3rd below'],u3:['3度上','3rd above'],d6:['6度
 const HARM_RATIO={3:[6,5],4:[5,4],8:[8,5],9:[5,3]};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', phrase:'scale', harmIv:'d3'};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3'};
 const DEF={...S};
 try{Object.assign(S,JSON.parse(localStorage.getItem('drone-settings')||'{}'));}catch(e){}
 if(!['quiz','harm','free','tuner'].includes(S.mode)) S.mode='quiz';
@@ -429,8 +448,9 @@ bind('key','key',Number,()=>{buildChordOpts(); refreshDrone(); showTarget(); bui
 bind('reg','reg',v=>v,refreshDrone);
 bind('source','source',v=>v,()=>{ applyProfile(); });
 buildChordOpts(); buildPhraseOpts();
-bind('set','set',v=>v,()=>{buildChordOpts(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
+bind('set','set',v=>v,()=>{buildChordOpts(); applyMode(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
 bind('chord','chord',v=>v,()=>{refreshDrone(); resetSeq(); restartTargets(); renderStats();});
+bind('prog','prog',v=>v,()=>{applyMode(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
 bind('phrase','phrase',v=>v,()=>startPhrase());
 bind('harmIv','harmIv',v=>v,()=>{ if(S.mode==='harm') setHarmStep(); });
 bind('order','order',v=>v,()=>{resetSeq(); nextTarget();});
@@ -584,8 +604,9 @@ function startTanpura(){
   };
   sched(); tanTimer=setInterval(sched,200);
 }
-function startDrone(){
-  ensureCtx(); stopDrone(true);
+// smooth: 進行で和音が変わるときは、前の和音と少し重ねて切り替える
+function startDrone(smooth){
+  ensureCtx(); stopDrone(smooth!==true);
   droneGain=ctx.createGain(); droneGain.gain.value=0; droneGain.connect(out);
   if(S.timbre==='tanpura') startTanpura();
   else if(SPECTRA[S.timbre]) startAdditive(S.timbre);
@@ -639,7 +660,7 @@ function syncMelody(articulate){
     mel.o.frequency.setValueAtTime(f,t+.06); mel.g.gain.setTargetAtTime(lv,t+.07,.03);
   }else{ mel.o.frequency.setTargetAtTime(f,t,.02); mel.g.gain.setTargetAtTime(lv,t,.05); }
 }
-function refreshDrone(){ if(droneOn) startDrone(); }
+function refreshDrone(smooth){ if(droneOn) startDrone(smooth); }
 $('droneBtn').onclick=()=>droneOn?stopDrone():startDrone();
 
 function playHint(){
@@ -794,9 +815,16 @@ function drawLevel(){
 /* ---------- Targets ---------- */
 let target=null, lastS=-1, seqIdx=-1;
 // 和音を伴奏にするのは「出題」「自由に歌う」のときだけ
-const chordOn=()=>(S.mode==='quiz'||S.mode==='free')&&!!CHORDS[S.set]&&CHORDS[S.set].some(c=>c[0]===S.chord);
+let progStep=0;
+// 初期化の途中(この行より前)からも呼ばれるので、関数宣言にしておく
+function progList(){ const p=(PROGS[S.set]||[]).find(x=>x[0]===S.prog); return p?p[1]:null; }
+function progOn(){ return S.mode==='quiz'&&!!progList(); }
+// 今鳴っている和音(進行のときはその段の和音)
+function curChord(){ return progOn()?progList()[progStep%progList().length]:S.chord; }
+function chordSym(id){ return ((CHORDS[S.set]||[]).find(c=>c[0]===id)||[,id])[1]; }
+const chordOn=()=>(S.mode==='quiz'||S.mode==='free')&&!!CHORDS[S.set]&&CHORDS[S.set].some(c=>c[0]===curChord());
 function chordInfo(){
-  const c=(CHORDS[S.set]||[]).find(x=>x[0]===S.chord); if(!c) return null;
+  const c=(CHORDS[S.set]||[]).find(x=>x[0]===curChord()); if(!c) return null;
   const [id,sym,r,[rp,rq]]=c, L=SETS[S.set];
   const tones=[0,2,4].map((k,i)=>{
     const s=L[(r+k)%7], semi=(s-L[r]+12)%12;
@@ -812,6 +840,14 @@ function buildChordOpts(){
   el.innerHTML=`<option value="none">${tr('なし(主音のドローン)','None (tonic drone)')}</option>`
     +list.map(c=>`<option value="${c[0]}">${c[1]}(${chordName(c)})</option>`).join('');
   el.value=S.chord; el.disabled=!list.length;
+  buildProgOpts();
+}
+function buildProgOpts(){
+  const el=$('prog'), list=PROGS[S.set]||[];
+  if(!list.some(p=>p[0]===S.prog)) S.prog='none';
+  el.innerHTML=`<option value="none">${tr('なし(和音を固定)','None (fixed chord)')}</option>`
+    +list.map(([id,ids])=>`<option value="${id}">${ids.map(chordSym).join(' → ')}</option>`).join('');
+  el.value=S.prog; el.disabled=!list.length;
 }
 function buildPhraseOpts(){
   const el=$('phrase'); el.innerHTML=PHRASES.map(([id,ja,en])=>`<option value="${id}">${tr(ja,en)}</option>`).join('');
@@ -821,7 +857,7 @@ function buildPhraseOpts(){
 // 出題・判定に使う音の一覧(チューナーは12音すべて、和音を選んでいればその構成音)
 let poolKey='', poolCache=[];
 function pool(){
-  const k=[S.mode,S.set,S.chord].join('|'); if(k===poolKey) return poolCache;
+  const k=[S.mode,S.set,curChord()].join('|'); if(k===poolKey) return poolCache;
   poolKey=k;
   if(S.mode==='tuner') poolCache=DEGREES;
   else { const ci=chordOn()?chordInfo():null; poolCache=ci?ci.tones:SETS[S.set].map(s=>DEGREES[s]); }
@@ -835,6 +871,7 @@ function setTarget(d){
   showTarget(); buildLadder(); animSol();
 }
 function nextTarget(){
+  if(progOn()){ progGo(progStep+1); return; }
   const list=pool(); let k;
   if(S.order==='up'){ seqIdx=(seqIdx+1)%list.length; k=seqIdx; }
   else if(S.order==='down'){ seqIdx=(seqIdx-1+list.length)%list.length; k=seqIdx; }
@@ -843,15 +880,45 @@ function nextTarget(){
 }
 // 目標を主音(和音のときは主音が無ければ根音)にする。音階順のときは、続けて「次の音」を押すとその隣へ進む
 function tonicTarget(){
+  if(progOn()){ progGo(0,true); return; }
   const list=pool(); let k=list.findIndex(d=>d.s===0); if(k<0) k=0;
   seqIdx=k; lastS=list[k].s; setTarget(list[k]);
 }
 // 設定が変わったとき、今の練習の種類に合わせて目標を作り直す
 function restartTargets(){
   labelQuizBtns();
-  if(S.mode==='quiz') nextTarget();
+  if(S.mode==='quiz') progOn()?progGo(0,true):nextTarget();
   else if(S.mode==='harm') startPhrase();
   else { showTarget(); buildLadder(); }
+}
+
+/* ---------- 和音の進行 ---------- */
+/* step 段目の和音へ進み、前の目標にいちばん近い構成音を目標にする(はじめは構成音からランダム)。
+   同じ音名が続いて高さが変わるとき(例: Ⅱm のレ 10:9 → Ⅴ のレ 9:8)は、そのずれを示す */
+let progPrev=null;
+function progGo(step,restart){
+  const L=progList(); progStep=((step%L.length)+L.length)%L.length;
+  const prev=restart?null:target;
+  refreshDrone(!restart);
+  const list=pool(); let pick;
+  if(!prev) pick=list[Math.floor(Math.random()*list.length)];
+  else {
+    const pc=targetCents(prev), dist=d=>{ const x=Math.abs(targetCents(d)-pc)%1200; return Math.min(x,1200-x); };
+    pick=list.reduce((a,d)=>dist(d)<dist(a)?d:a);
+  }
+  progPrev=prev&&prev.s===pick.s?prev:null;
+  lastS=pick.s; setTarget(pick); renderStats();
+}
+function renderProg(){
+  const box=$('prog-view'); if(!progOn()){ box.innerHTML=''; return; }
+  const cells=progList().map((id,k)=>`<span class="n${k===progStep?' cur':k<progStep?' done':''}">${chordSym(id)}</span>`).join('<span class="n">→</span>');
+  let note='';
+  if(progPrev&&target){
+    const diff=targetCents(target)-targetCents(progPrev);
+    note=Math.abs(diff)<0.05?tr(`前の和音と同じ高さの「${target.sol}」(共通音)です。`,`Same ${target.solE} as in the previous chord (common tone).`)
+      :tr(`同じ「${target.sol}」でも、前の和音より <b>${signed(diff)} セント</b>の高さです。`,`The same ${target.solE}, but <b>${signed(diff)} cents</b> from the previous chord.`);
+  }
+  box.innerHTML=`<div class="ln"><span class="lb">${tr('進行','PROG.')}</span>${cells}</div>`+(note?`<div class="pn">${note}</div>`:'');
 }
 
 /* ---------- ハモリ ---------- */
@@ -910,7 +977,7 @@ const ratioOf=d=>S.tuning==='just'?`${d.p}:${d.q}`:S.tuning==='pyth'?`${d.pp}:${
 function showTarget(){
   const m=S.mode, open=m==='free'||m==='tuner';
   $('sol').classList.toggle('free',open);
-  renderPhrase();
+  renderPhrase(); renderProg();
   if(open){
     setMarkDeg(null); $('sol').textContent='—';
     $('deg').textContent=m==='free'?tr('自由に歌う','Free singing'):tr('チューナー','Tuner');
@@ -932,20 +999,22 @@ function showTarget(){
 
 /* ---------- 練習の種類 ---------- */
 const MODE_NOTES={
-  quiz:['指定された音をドローンに合わせて歌います。伴奏の和音を選ぶと、その和音の構成音を出題します。','Sing the note shown against the drone. Choose an accompanying chord to be asked its chord tones.'],
+  quiz:['指定された音をドローンに合わせて歌います。伴奏の和音や和音の進行を選ぶと、その和音の構成音を出題します。','Sing the note shown against the drone. Choose an accompanying chord or a progression to be asked its chord tones.'],
   harm:['アプリが旋律を鳴らします。下の段の音を歌って、旋律にハモってください。','The app plays a melody. Sing the notes in the lower row to harmonize with it.'],
   free:['目標を決めずに歌い、いちばん近い音とのずれを表示します。','Sing without a target; shows the deviation from the nearest note.'],
   tuner:['楽器の音を調に合わせます。各音を平均律から何セントずらすかも表で示します。','Tune your instrument to the key. The table shows how many cents each note differs from equal temperament.'],
 };
 function labelMode(){ const [ja,en]=MODE_NOTES[S.mode]; $('modeNote').textContent=tr(ja,en); }
 function labelQuizBtns(){
-  const harmM=S.mode==='harm', noDo=!harmM&&!pool().some(d=>d.s===0);
-  $('tonicBtn').innerHTML=(harmM?tr('最初から','From the top'):noDo?tr('根音に戻る','Back to root'):tr('主音に戻る','Back to tonic'))+' <kbd>T</kbd>';
-  $('nextBtn').innerHTML=tr('次の音','Next note')+' <kbd>N</kbd>';
+  const harmM=S.mode==='harm', pg=progOn(), noDo=!harmM&&!pool().some(d=>d.s===0);
+  $('tonicBtn').innerHTML=(harmM||pg?tr('最初から','From the top'):noDo?tr('根音に戻る','Back to root'):tr('主音に戻る','Back to tonic'))+' <kbd>T</kbd>';
+  $('nextBtn').innerHTML=(pg?tr('次の和音','Next chord'):tr('次の音','Next note'))+' <kbd>N</kbd>';
 }
 function applyMode(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
   document.querySelectorAll('[data-modes]').forEach(el=>{ el.hidden=!el.dataset.modes.split(' ').includes(S.mode); });
+  // 進行を選んでいるときは、和音と出題の順番は進行が決める
+  if(progOn()) ['chord','order'].forEach(id=>$(id).closest('.field').hidden=true);
   labelMode(); labelQuizBtns();
   if(S.mode==='tuner') renderTuner();
 }
@@ -1130,8 +1199,9 @@ function pass(){
   const now=performance.now(); passMarks.push({t:now,len:S.hold}); passFlashT=now; streak++;
   $('flash').className='flash ok';
   const av=`${avg>0?'+':''}${avg.toFixed(1)}`;
-  $('flash').innerHTML=tr(`合格 ${target.sol}  平均 ${av} セント${S.auto?' → 次の音へ':''}<span class="streak">連続 ${streak}</span>`,
-    `Pass: ${target.solE}  avg ${av} cents${S.auto?' → next note':''}<span class="streak">streak ${streak}</span>`);
+  const pg=progOn();
+  $('flash').innerHTML=tr(`合格 ${target.sol}  平均 ${av} セント${S.auto?(pg?' → 次の和音へ':' → 次の音へ'):''}<span class="streak">連続 ${streak}</span>`,
+    `Pass: ${target.solE}  avg ${av} cents${S.auto?(pg?' → next chord':' → next note'):''}<span class="streak">streak ${streak}</span>`);
   $('sol').classList.add('hit'); $('badge').classList.add('show'); document.querySelector('.bench').classList.add('passed');
   chime();
   locked=true;
@@ -1147,7 +1217,7 @@ function pass(){
 let stats={};
 try{stats=JSON.parse(localStorage.getItem('drone-stats')||'{}');}catch(e){}
 // 和音を伴奏にした記録は、和音ごとに分けて残す(同じレでもⅤとⅡmでは目標の高さが違うため)
-const statKey=s=>S.tuning+(chordOn()?':'+S.chord:'')+':'+s;
+const statKey=s=>S.tuning+(chordOn()?':'+curChord():'')+':'+s;
 function addStat(s,avg){
   const k=statKey(s), r=stats[k]||{n:0,sum:0,abs:0};
   r.n++; r.sum+=avg; r.abs+=Math.abs(avg); stats[k]=r;

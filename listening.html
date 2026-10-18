@@ -55,9 +55,18 @@ button.primary{background:var(--brass);border-color:var(--brass);color:#fff;font
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.primary{color:#1B1408}}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 button:disabled{opacity:.45;cursor:default}
-/* 操作ボタン4つは常に1行に並べる */
+/* 操作ボタンは「鳴らす・決定(答えた後は次の問題)」と「やり直し・別の問題」の2段に分け、各段は1行に並べる */
 .actions{display:flex;gap:8px}
 .actions .btn{flex:1 1 0;min-width:0;white-space:nowrap;padding-inline:6px}
+.actions.sub{margin-top:-10px}
+.actions.sub .btn{flex:0 1 auto;padding-inline:14px;font-size:14px}
+/* スマホでは主な操作を画面下に固定し、つまみを動かしながら押せるようにする */
+@media (max-width:640px){
+  .actions.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    background:color-mix(in srgb, var(--panel) 94%, transparent);backdrop-filter:blur(6px);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .actions.dock .btn{padding-block:12px}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+}
 .opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:-6px}
 .opts .chips{margin-top:0;gap:6px}
 .opts .chip{font-size:13px;padding:4px 10px}
@@ -237,11 +246,14 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
       <div class="meta" id="qmeta"></div>
     </div>
 
-    <div class="actions">
+    <div class="actions dock">
       <button class="btn primary play" id="play"></button>
       <button class="btn primary" id="submit" data-en="Lock in">ここで決定</button>
+      <button class="btn primary" id="nextq" data-en="Next question ▶" hidden>次の問題 ▶</button>
+    </div>
+    <div class="actions sub">
       <button class="btn" id="retry" title="動かす音を出題時の位置に戻す" data-en-title="Return the moving note to its starting position" data-en="Retry">やり直し</button>
-      <button class="btn" id="newq" data-en="New question">別の問題</button>
+      <button class="btn" id="newq" data-en="Skip">別の問題</button>
     </div>
     <div class="opts">
       <div class="chips" id="voices">
@@ -606,10 +618,13 @@ function newQuestion(reroll=true){
 }
 function beginAttempt(){
   answered=false;
-  $('result').hidden=true; $('submit').disabled=false;
+  $('result').hidden=true; labelAnswer();
   setOffset(startOffset);
 }
+// 答えた後は「決定」を「次の問題」に置き換え、「別の問題」(飛ばす)は隠す
+function labelAnswer(){ $('submit').hidden=answered; $('nextq').hidden=!answered; $('newq').hidden=answered; }
 $('newq').onclick=()=>newQuestion();
+$('nextq').onclick=()=>newQuestion();
 $('retry').onclick=beginAttempt;
 
 function verdictOf(e){
@@ -620,7 +635,7 @@ function verdictOf(e){
   return tr('もう一歩。まだ唸りがはっきり聞こえる位置です','Almost. The beating is still clearly audible');
 }
 $('submit').onclick=()=>{
-  answered=true; mine=offset; $('submit').disabled=true;
+  answered=true; mine=offset; labelAnswer(); $('nextq').focus({preventScroll:true});
   const err=offset-target();
   showResult();
   $('result').hidden=false;
