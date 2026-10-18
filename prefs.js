@@ -6,8 +6,10 @@
    - 固定の文言: HTML の要素に data-en="英語"(HTML も書ける)を付ける。日本語は元の中身をそのまま使う
    - 属性: data-en-title / data-en-aria-label / data-en-placeholder
    - JS で作る文言: tr('日本語','English') で選び、onLang(fn) で言語が変わったときに書き直す
-   - ページのスクリプトの最初で applyLang() を呼ぶ(切替ボタンもここで上部に置く)
-   - 「聴く」「歌う」ページでは、上部の左側に2つのページを行き来するタブも置く
+   - ページのスクリプトの最初で applyLang() を呼ぶ(上部の帯もここで置く)
+   - 「聴く」「歌う」ページの上部は、2つのページを行き来するタブと「⚙ 設定」だけにする。
+     テーマと言語の切替は設定画面の data-pref="theme" / data-pref="lang" の欄に置く
+   - 設定画面のないページ(ホーム)では、テーマと言語の切替を上部に置く
    - ホーム画面に追加するときのアプリ名も言語に合わせる(manifest を切り替え、iPhone 用の名前も書き換える)
 
    テーマ
@@ -69,7 +71,8 @@
       '.topbar .seg{display:flex;gap:4px}'+
       '.topbar button{font:inherit;font-size:13px;line-height:1.5;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:2px 12px;border-radius:999px;cursor:pointer}'+
       '.topbar button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}'+
-      '.topbar button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}';
+      '.topbar button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}'+
+      '.topbar .gear{font-size:14px;padding:4px 14px;color:var(--ink)}';
     document.head.appendChild(st);
     bar=document.createElement('div'); bar.className='topbar';
     const seg=(cls,items,onPick)=>{
@@ -84,17 +87,34 @@
         if(href===here) a.setAttribute('aria-current','page'); nav.appendChild(a); });
       bar.appendChild(nav);
     }
-    seg('theme',THEMES.map(([v])=>[v,'']),setTheme);
-    seg('lang',[['ja','日本語','ja'],['en','English','en']],setLang).setAttribute('aria-label','Language / 言語');
+    const open=document.getElementById('openSettings');
+    if(document.getElementById('settingsDlg')&&open){
+      // 設定画面を開くボタン(ページ内の「⚙ 設定」と同じ動作)
+      const g=document.createElement('button'); g.type='button'; g.className='gear'; g.setAttribute('aria-haspopup','dialog');
+      g.onclick=()=>open.click(); bar.appendChild(g);
+    }else{
+      seg('theme',THEMES.map(([v])=>[v,'']),setTheme);
+      seg('lang',[['ja','日本語','ja'],['en','English','en']],setLang).setAttribute('aria-label','Language / 言語');
+    }
+    // 設定画面の「表示」欄
+    document.querySelectorAll('[data-pref]').forEach(box=>{
+      const isT=box.dataset.pref==='theme';
+      (isT?THEMES.map(([v])=>[v,'']):[['ja','日本語','ja'],['en','English','en']]).forEach(([v,lab,l])=>{
+        const b=document.createElement('button'); b.type='button'; b.className='chip'; b.dataset.v=v; b.textContent=lab;
+        if(l) b.lang=l; b.onclick=()=>(isT?setTheme:setLang)(v); box.appendChild(b); });
+      box.setAttribute('role','group');
+    });
     const wrap=document.querySelector('.wrap')||document.body;
     wrap.insertBefore(bar,wrap.firstChild);
   }
   function markBar(){
     if(!bar) return;
-    bar.querySelectorAll('.theme button').forEach(b=>{ b.setAttribute('aria-pressed',b.dataset.v===theme);
+    document.querySelectorAll('.topbar .theme button,[data-pref="theme"] button').forEach(b=>{ b.setAttribute('aria-pressed',b.dataset.v===theme);
       const t=THEMES.find(x=>x[0]===b.dataset.v); b.textContent=tr(t[1],t[2]); });
-    bar.querySelector('.theme').setAttribute('aria-label',tr('テーマ','Theme'));
-    bar.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===lang));
+    const th=bar.querySelector('.theme'); if(th) th.setAttribute('aria-label',tr('テーマ','Theme'));
+    document.querySelectorAll('.topbar .lang button,[data-pref="lang"] button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===lang));
+    const gear=bar.querySelector('.gear');
+    if(gear){ gear.textContent=tr('⚙ 設定','⚙ Settings'); gear.title=tr('設定(テーマ・言語もここ)','Settings (theme and language are here too)'); }
     const nav=bar.querySelector('.tabs');
     if(nav){ nav.setAttribute('aria-label',tr('ページ','Pages'));
       nav.querySelectorAll('a').forEach(a=>{ const p=PAGES.find(x=>x[0]===a.dataset.p); a.textContent=tr(p[1],p[2]); }); }

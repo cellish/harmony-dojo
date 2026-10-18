@@ -131,6 +131,13 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
 .group legend{padding:0 6px;margin-left:-6px;font-family:var(--display);font-weight:600;font-size:16px}
 .group legend span{font-family:var(--body);font-size:12px;font-weight:400;color:var(--muted);margin-left:10px}
 .group .chips{margin-top:4px}
+/* 設定画面: 「このページの設定」「両ページ共通」の2つに分ける(両ページで同じ順番) */
+.dlgsec{margin:6px 0 -4px;font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.dlgsec:first-child{margin-top:0}
+.prefrow{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.prefrow+.prefrow{margin-top:10px}
+.prefrow .label{min-width:7em}
+.prefrow .chips{margin-top:0}
 @media (max-width:480px){
   dialog#settingsDlg{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:16px 16px 0 0;border-bottom:0;max-height:88dvh}
   .dlgbody{padding:12px}
@@ -188,17 +195,7 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
   <dialog id="settingsDlg" aria-labelledby="dlgTitle">
     <div class="dlghead"><h2 id="dlgTitle" data-en="Settings">設定</h2><button class="btn" type="button" id="closeSettings" data-en="Close">閉じる</button></div>
     <div class="dlgbody">
-      <fieldset class="group">
-        <legend data-en="Reference pitch<span>Shared with the Sing page</span>">基準ピッチ<span>「歌う」ページと共通</span></legend>
-        <div class="pitchrow">
-          <button class="btn" type="button" id="a4down" aria-label="0.5 Hz 下げる" data-en-aria-label="Lower by 0.5 Hz">−</button>
-          <input type="number" id="a4" min="400" max="480" step="0.5" value="440" inputmode="decimal" aria-label="基準ピッチ(A4)" data-en-aria-label="Reference pitch (A4)">
-          <span class="hzunit">Hz</span>
-          <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる" data-en-aria-label="Raise by 0.5 Hz">+</button>
-          <div class="chips" id="a4presets"></div>
-        </div>
-      </fieldset>
-
+      <h3 class="dlgsec" data-en="THIS PAGE">このページの設定</h3>
       <fieldset class="group">
         <legend data-en="Range<span>Add octaves to the interval</span>">音域の広さ<span>音程にオクターヴを足して出題</span></legend>
         <div class="chips" id="octs">
@@ -209,11 +206,29 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
       </fieldset>
 
       <fieldset class="group">
-        <legend data-en="Moving note<span>The other note stays fixed as the reference</span>">動かす音<span>もう一方は基準音として固定</span></legend>
+        <legend data-en="Moving note<span>The other note stays fixed</span>">動かす音<span>もう一方は基準音として固定</span></legend>
         <div class="chips" id="modes">
           <button class="chip" type="button" id="mode-upper" aria-pressed="true" data-en="Move the upper note">上の音を動かす</button>
           <button class="chip" type="button" id="mode-lower" aria-pressed="false" data-en="Move the lower note">下の音を動かす</button>
         </div>
+      </fieldset>
+
+      <h3 class="dlgsec" data-en="BOTH PAGES (Listen and Sing)">両ページ共通(「聴く」「歌う」)</h3>
+      <fieldset class="group">
+        <legend data-en="Reference pitch (A4)">基準ピッチ(A4)</legend>
+        <div class="pitchrow">
+          <button class="btn" type="button" id="a4down" aria-label="0.5 Hz 下げる" data-en-aria-label="Lower by 0.5 Hz">−</button>
+          <input type="number" id="a4" min="400" max="480" step="0.5" value="440" inputmode="decimal" aria-label="基準ピッチ(A4)" data-en-aria-label="Reference pitch (A4)">
+          <span class="hzunit">Hz</span>
+          <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる" data-en-aria-label="Raise by 0.5 Hz">+</button>
+          <div class="chips" id="a4presets"></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend data-en="Display">表示</legend>
+        <div class="prefrow"><span class="label" data-en="Theme">テーマ</span><div class="chips" data-pref="theme"></div></div>
+        <div class="prefrow"><span class="label" data-en="Language">言語</span><div class="chips" data-pref="lang"></div></div>
       </fieldset>
     </div>
   </dialog>
