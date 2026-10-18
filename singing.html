@@ -215,7 +215,7 @@ header a{color:var(--brass)}
       <div class="field" data-modes="quiz"><label class="label" for="prog" data-en="Chord progression">和音の進行</label><select id="prog"></select></div>
       <div class="field" data-modes="quiz free"><label class="label" for="chord" data-en="Accompanying chord">伴奏の和音</label><select id="chord"></select></div>
       <div class="field" data-modes="quiz"><label class="label" for="order" data-en="Order">出題の順番</label>
-        <select id="order"><option value="random" data-en="Random">ランダム</option><option value="up" data-en="Ascending scale">上行音階</option><option value="down" data-en="Descending scale">下行音階</option></select></div>
+        <select id="order"><option value="random" data-en="Random">ランダム</option><option value="up" data-en="Ascending scale">上行音階</option><option value="down" data-en="Descending scale">下行音階</option><option value="weak" data-en="Focus on weak notes">苦手を重点</option></select></div>
       <div class="field" data-modes="harm"><label class="label" for="phrase" data-en="Melody">旋律</label><select id="phrase"></select></div>
       <div class="field" data-modes="harm"><label class="label" for="harmIv" data-en="Your part">ハモる音</label>
         <select id="harmIv"><option value="d3" data-en="3rd below">3度下</option><option value="u3" data-en="3rd above">3度上</option><option value="d6" data-en="6th below">6度下</option></select></div>
@@ -341,10 +341,11 @@ header a{color:var(--brass)}
   <details class="fold" id="statsFold" open data-modes="quiz">
     <summary><h2 data-en="Record">記録</h2></summary>
     <div class="tablewrap"><table>
-      <thead><tr><th data-en="Note">音</th><th class="n" data-en="Passes">合格回数</th><th class="n" data-en="Avg. deviation">平均のずれ</th><th class="n" data-en="Tendency">傾向</th></tr></thead>
+      <thead><tr><th data-en="Note">音</th><th class="n" data-en="Passes">合格回数</th><th class="n" data-en="Avg. deviation">平均のずれ</th><th class="n" data-en="Tendency">傾向</th><th class="n" data-en="Chance in “Focus”">重点出題の確率</th></tr></thead>
       <tbody id="stats"></tbody>
     </table></div>
     <p class="note" id="statsNote" style="margin-top:6px"></p>
+    <p class="note" data-en="“Focus on weak notes” (in Order) asks more often for notes with a larger recent deviation, notes that took long to pass, notes you skipped with “Next note” after singing, and notes you have not passed yet. Time to pass counts only the time your voice was detected.">「出題の順番」の「苦手を重点」では、最近のずれが大きい音、合格までに時間がかかった音、歌ってみて「次の音」で飛ばした音、まだ合格していない音を多めに出します。合格までの時間は、声が出ていた時間だけを数えます。</p>
     <div class="row" style="margin-top:8px"><button class="btn" id="resetStats"></button><span class="status" id="resetMsg"></span></div>
   </details>
 
@@ -813,7 +814,7 @@ function drawLevel(){
 }
 
 /* ---------- Targets ---------- */
-let target=null, lastS=-1, seqIdx=-1;
+let target=null, lastS=-1, seqIdx=-1, seekMs=0, lastFrame=0;
 // 和音を伴奏にするのは「出題」「自由に歌う」のときだけ
 let progStep=0;
 // 初期化の途中(この行より前)からも呼ばれるので、関数宣言にしておく
@@ -867,7 +868,7 @@ function pool(){
 function resetSeq(){ seqIdx = S.order==='down' ? 1 : -1; }
 function animSol(){ const el=$('sol'); el.classList.remove('enter','hit'); void el.offsetWidth; el.classList.add('enter'); }
 function setTarget(d){
-  target=d; resetHold(); $('flash').textContent=''; $('flash').className='flash';
+  target=d; seekMs=0; resetHold(); $('flash').textContent=''; $('flash').className='flash';
   showTarget(); buildLadder(); animSol();
 }
 function nextTarget(){
@@ -875,7 +876,15 @@ function nextTarget(){
   const list=pool(); let k;
   if(S.order==='up'){ seqIdx=(seqIdx+1)%list.length; k=seqIdx; }
   else if(S.order==='down'){ seqIdx=(seqIdx-1+list.length)%list.length; k=seqIdx; }
-  else { const ks=list.map((d,i)=>i).filter(i=>list[i].s!==lastS); k=ks[Math.floor(Math.random()*ks.length)]; }
+  else {
+    const ks=list.map((d,i)=>i).filter(i=>list[i].s!==lastS);
+    if(S.order==='weak'){
+      // 苦手度に比例した確率で選ぶ
+      const w=ks.map(i=>weakWeight(list[i].s)), tot=w.reduce((a,b)=>a+b,0);
+      let x=Math.random()*tot; k=ks[ks.length-1];
+      for(let j=0;j<ks.length;j++){ x-=w[j]; if(x<0){ k=ks[j]; break; } }
+    } else k=ks[Math.floor(Math.random()*ks.length)];
+  }
   lastS=list[k].s; setTarget(list[k]);
 }
 // 目標を主音(和音のときは主音が無ければ根音)にする。音階順のときは、続けて「次の音」を押すとその隣へ進む
@@ -1026,7 +1035,11 @@ function setMode(m){
 }
 document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 // 「次の音」「主音に戻る」は、自由に歌う・チューナーの途中でも押せば出題に戻る
-function goNext(){ streak=0; if(S.mode==='harm') harmAdvance(); else if(S.mode!=='quiz') setMode('quiz'); else nextTarget(); }
+function goNext(){
+  streak=0;
+  if(S.mode==='harm') harmAdvance(); else if(S.mode!=='quiz') setMode('quiz');
+  else { if(target&&!locked&&seekMs>1500) addSkip(target.s); nextTarget(); }
+}
 function goTonic(){ streak=0; if(S.mode==='harm'){ startPhrase(); return; } if(S.mode!=='quiz') setMode('quiz'); tonicTarget(); }
 $('nextBtn').onclick=goNext;
 $('tonicBtn').onclick=goTonic;
@@ -1169,6 +1182,9 @@ function loop(){
     voice.hidden=true; $('needle').hidden=true; $('cents').textContent='—'; $('cents').style.color=''; $('hz').textContent=tr('声を待っています','Waiting for your voice');
   }
   trace.push({t:now,c:dev});
+  // 合格までにかかった時間(声が出ていた時間だけ。考えている間や休んでいる間は数えない)
+  if(f&&!locked&&lastFrame) seekMs+=Math.min(100,now-lastFrame);
+  lastFrame=now;
   drawTrace(now);
 
   if((S.mode==='quiz'||S.mode==='harm')&&!locked){
@@ -1195,7 +1211,7 @@ function chime(){
 }
 function pass(){
   const avg=holdDevs.reduce((a,b)=>a+b,0)/holdDevs.length;
-  if(S.mode==='quiz') addStat(target.s,avg);
+  if(S.mode==='quiz') addStat(target.s,avg,seekMs/1000);
   const now=performance.now(); passMarks.push({t:now,len:S.hold}); passFlashT=now; streak++;
   $('flash').className='flash ok';
   const av=`${avg>0?'+':''}${avg.toFixed(1)}`;
@@ -1218,22 +1234,34 @@ let stats={};
 try{stats=JSON.parse(localStorage.getItem('drone-stats')||'{}');}catch(e){}
 // 和音を伴奏にした記録は、和音ごとに分けて残す(同じレでもⅤとⅡmでは目標の高さが違うため)
 const statKey=s=>S.tuning+(chordOn()?':'+curChord():'')+':'+s;
-function addStat(s,avg){
+/* 記録: n 合格回数, sum/abs ずれの合計, e 最近のずれ(新しいほど重い平均), t 最近の合格までの秒数, sk 飛ばした回数(合格で1減る) */
+const saveStats=()=>{ try{localStorage.setItem('drone-stats',JSON.stringify(stats));}catch(e){} };
+function addStat(s,avg,sec){
   const k=statKey(s), r=stats[k]||{n:0,sum:0,abs:0};
-  r.n++; r.sum+=avg; r.abs+=Math.abs(avg); stats[k]=r;
-  try{localStorage.setItem('drone-stats',JSON.stringify(stats));}catch(e){}
-  renderStats();
+  const a=.35, e0=r.n?(r.e??r.abs/r.n):Math.abs(avg);
+  r.e=e0+(Math.abs(avg)-e0)*a; r.t=r.t==null?sec:r.t+(sec-r.t)*a;
+  r.n++; r.sum+=avg; r.abs+=Math.abs(avg); if(r.sk) r.sk--; stats[k]=r;
+  saveStats(); renderStats();
+}
+function addSkip(s){ const k=statKey(s), r=stats[k]||{n:0,sum:0,abs:0}; r.sk=(r.sk||0)+1; stats[k]=r; saveStats(); renderStats(); }
+// 苦手度(重点出題の重み)。まだ合格していない音は高め、ずれ・時間・飛ばした回数で増える
+function weakWeight(s){
+  const r=stats[statKey(s)];
+  if(!r||!r.n) return 3+(r&&r.sk||0);
+  const e=r.e??r.abs/r.n, t=Math.max(0,(r.t||0)-S.hold/1000);
+  return Math.min(8,1+e/3+t/3+(r.sk||0));
 }
 function renderStats(){
   const ci=chordOn()?chordInfo():null;
   $('statsNote').textContent=ci?tr(`${ci.sym}(${ci.name})の上で歌った記録です。`,`Record for singing over ${ci.sym} (${ci.name}).`):'';
-  $('stats').innerHTML=pool().map(d=>{
-    const r=stats[statKey(d.s)];
+  const list=pool(), w=list.map(d=>weakWeight(d.s)), tot=w.reduce((a,b)=>a+b,0);
+  $('stats').innerHTML=list.map((d,i)=>{
+    const r=stats[statKey(d.s)], pct=`<td class="n">${Math.round(w[i]/tot*100)}%</td>`;
     const nm=d.role?tr(`${d.sol}(${d.role[0]})`,`${d.solE} (${d.role[1]})`):tr(`${d.sol}(${d.name})`,`${d.solE} (${d.nameE})`);
-    if(!r) return `<tr><td>${nm}</td><td class="n">0</td><td class="n">—</td><td class="n">—</td></tr>`;
+    if(!r||!r.n) return `<tr><td>${nm}</td><td class="n">0</td><td class="n">—</td><td class="n">—</td>${pct}</tr>`;
     const bias=r.sum/r.n;
     const tend=Math.abs(bias)<1.5?tr('ほぼ中心','centered'):bias>0?tr('高め','sharp'):tr('低め','flat');
-    return `<tr><td>${nm}</td><td class="n">${r.n}</td><td class="n">${(r.abs/r.n).toFixed(1)}</td><td class="n">${tend} ${bias>0?'+':''}${bias.toFixed(1)}</td></tr>`;
+    return `<tr><td>${nm}</td><td class="n">${r.n}</td><td class="n">${(r.abs/r.n).toFixed(1)}</td><td class="n">${tend} ${bias>0?'+':''}${bias.toFixed(1)}</td>${pct}</tr>`;
   }).join('');
 }
 // 記録の開閉状態を覚えておく
