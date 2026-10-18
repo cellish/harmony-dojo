@@ -65,6 +65,13 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
   dialog#settingsDlg{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:16px 16px 0 0;border-bottom:0;max-height:88dvh}
   .dlgbody{padding:12px}
 }
+/* 設定画面: 「このページの設定」「両ページ共通」の2つに分ける(両ページで同じ順番) */
+.dlgsec{margin:6px 0 -4px;font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.dlgsec:first-child{margin-top:0}
+.prefrow{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.prefrow+.prefrow{margin-top:10px}
+.prefrow .label{min-width:7em}
+.prefrow .chips{margin-top:0}
 .group legend span{font-family:var(--body);font-size:12px;font-weight:400;color:var(--muted);margin-left:10px}
 select,input[type=range]{font:inherit;width:100%}
 select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
@@ -231,22 +238,7 @@ header a{color:var(--brass)}
   <dialog id="settingsDlg" aria-labelledby="dlgTitle">
     <div class="dlghead"><h2 id="dlgTitle" data-en="Settings">設定</h2><button class="btn" type="button" id="closeSettings" data-en="Close">閉じる</button></div>
     <div class="dlgbody">
-      <fieldset class="group">
-        <legend data-en="Reference pitch<span>Shared with the Listen page</span>">基準ピッチ<span>「聴く」ページと共通</span></legend>
-        <div class="pitchrow">
-          <button class="btn" type="button" id="a4down" aria-label="0.5 Hz 下げる" data-en-aria-label="Lower by 0.5 Hz">−</button>
-          <input type="number" id="a4" min="400" max="480" step="0.5" value="440" inputmode="decimal" aria-label="基準ピッチ(A4)" data-en-aria-label="Reference pitch (A4)">
-          <span class="hzunit">Hz</span>
-          <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる" data-en-aria-label="Raise by 0.5 Hz">+</button>
-          <div class="chips" id="a4presets"></div>
-        </div>
-        <div class="settings" style="margin-top:12px">
-          <div class="field"><label class="label" for="anchor" data-en="What the reference sets">基準ピッチを合わせる音</label>
-            <select id="anchor"><option value="et" data-en="Equal-tempered A (tonic follows ET)">平均律の A(主音は平均律の高さ)</option><option value="tuned" data-en="A in the target tuning">目標の音律での A</option></select></div>
-        </div>
-        <p class="note" id="anchorNote" style="margin-top:8px"></p>
-      </fieldset>
-
+      <h3 class="dlgsec" data-en="THIS PAGE">このページの設定</h3>
       <fieldset class="group">
         <legend data-en="Drone<span>The accompaniment that keeps sounding</span>">ドローン<span>鳴らし続ける伴奏の音</span></legend>
         <div class="settings">
@@ -277,6 +269,29 @@ header a{color:var(--brass)}
             <select id="source"><option value="voice" data-en="Voice">声</option><option value="cello" data-en="Cello">チェロ</option><option value="violin" data-en="Violin">ヴァイオリン</option></select></div>
         </div>
         <label class="check"><input type="checkbox" id="speaker"> <span data-en="Play through speakers (use echo cancellation)">スピーカーで鳴らす(エコー除去を使う)</span></label>
+      </fieldset>
+
+      <h3 class="dlgsec" data-en="BOTH PAGES (Listen and Sing)">両ページ共通(「聴く」「歌う」)</h3>
+      <fieldset class="group">
+        <legend data-en="Reference pitch (A4)">基準ピッチ(A4)</legend>
+        <div class="pitchrow">
+          <button class="btn" type="button" id="a4down" aria-label="0.5 Hz 下げる" data-en-aria-label="Lower by 0.5 Hz">−</button>
+          <input type="number" id="a4" min="400" max="480" step="0.5" value="440" inputmode="decimal" aria-label="基準ピッチ(A4)" data-en-aria-label="Reference pitch (A4)">
+          <span class="hzunit">Hz</span>
+          <button class="btn" type="button" id="a4up" aria-label="0.5 Hz 上げる" data-en-aria-label="Raise by 0.5 Hz">+</button>
+          <div class="chips" id="a4presets"></div>
+        </div>
+        <div class="settings" style="margin-top:12px">
+          <div class="field"><label class="label" for="anchor" data-en="What the reference sets (Sing page only)">基準ピッチを合わせる音(歌うページのみ)</label>
+            <select id="anchor"><option value="et" data-en="Equal-tempered A (tonic follows ET)">平均律の A(主音は平均律の高さ)</option><option value="tuned" data-en="A in the target tuning">目標の音律での A</option></select></div>
+        </div>
+        <p class="note" id="anchorNote" style="margin-top:8px"></p>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend data-en="Display">表示</legend>
+        <div class="prefrow"><span class="label" data-en="Theme">テーマ</span><div class="chips" data-pref="theme"></div></div>
+        <div class="prefrow"><span class="label" data-en="Language">言語</span><div class="chips" data-pref="lang"></div></div>
       </fieldset>
     </div>
   </dialog>

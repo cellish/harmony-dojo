@@ -11,7 +11,7 @@
 - **ハモリ道場：聴く / Harmony Dojo: Listen** (`listening.html`)：2音を同時に鳴らし、片方を動かして唸りが消える純正音程を探します。
 - **ハモリ道場：歌う / Harmony Dojo: Sing** (`singing.html`)：主音のドローンに合わせて指定の音を歌い、ずれをセント単位で表示します。マイクを使います（ヘッドホン推奨）。
 
-表示は日本語と英語に対応しています。最初はブラウザの言語設定で決まり、各ページ右上のボタンで切り替えられます。同じ場所で、テーマ(自動・ライト・ダーク)も選べます。選んだ言語とテーマは次回も使われます。
+表示は日本語と英語に対応しています。最初はブラウザの言語設定で決まり、ホームでは右上のボタン、「聴く」「歌う」では右上の「⚙ 設定」の「表示」欄で切り替えられます。同じ場所で、テーマ(自動・ライト・ダーク)も選べます。選んだ言語とテーマは次回も使われます。
 
 インストールは不要です。iPhone / iPad では Safari で開いて「共有 → ホーム画面に追加」、Android の Chrome ではメニューの「アプリをインストール」で、アプリのように全画面で使えます。一度開けば、ネットにつながっていなくても動きます。
 
@@ -27,7 +27,7 @@ Browser-based practice pages for developing relative pitch and a feel for harmon
 - **Harmony Dojo: Listen** (`listening.html`): Two notes sound together; move one of them to find the just interval where the beating disappears.
 - **Harmony Dojo: Sing** (`singing.html`): Sing the given note over a tonic drone and see how far off you are, in cents. Uses the microphone (headphones recommended).
 
-The pages are available in Japanese and English. The language is chosen from your browser settings at first, and you can switch it with the buttons at the top right of each page. The theme (Auto, Light, Dark) can be chosen in the same place. Your choices are remembered for next time.
+The pages are available in Japanese and English. The language is chosen from your browser settings at first, and you can switch it with the buttons at the top right of the home page, or under “Display” in “⚙ Settings” (top right) on the Listen and Sing pages. The theme (Auto, Light, Dark) can be chosen in the same place. Your choices are remembered for next time.
 
 No installation is needed. On iPhone / iPad, open the site in Safari and choose "Share → Add to Home Screen"; on Android, choose "Install app" from the Chrome menu. It then runs full-screen like an app. Once opened, it also works offline.
 
