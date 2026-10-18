@@ -7,6 +7,7 @@
    - 属性: data-en-title / data-en-aria-label / data-en-placeholder
    - JS で作る文言: tr('日本語','English') で選び、onLang(fn) で言語が変わったときに書き直す
    - ページのスクリプトの最初で applyLang() を呼ぶ(切替ボタンもここで上部に置く)
+   - 「聴く」「歌う」ページでは、上部の左側に2つのページを行き来するタブも置く
    - ホーム画面に追加するときのアプリ名も言語に合わせる(manifest を切り替え、iPhone 用の名前も書き換える)
 
    テーマ
@@ -54,10 +55,17 @@
 
   /* ---------- 上部の切替ボタン ---------- */
   const THEMES=[['auto','自動','Auto'],['light','ライト','Light'],['dark','ダーク','Dark']];
+  const PAGES=[['listening.html','聴く','Listen'],['singing.html','歌う','Sing']];
+  const here=location.pathname.split('/').pop();
   function makeBar(){
     const st=document.createElement('style');
     st.textContent=
-      '.topbar{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px 12px;margin-bottom:-12px}'+
+      '.topbar{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-bottom:-12px}'+
+      '.topbar .tabs{display:flex;gap:4px;margin-right:auto;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}'+
+      '.topbar .tabs a{font-size:14px;font-weight:700;line-height:1.5;padding:4px 18px;border-radius:999px;color:var(--muted);text-decoration:none}'+
+      '.topbar .tabs a:hover{color:var(--ink)}'+
+      '.topbar .tabs a[aria-current="page"]{background:var(--brass);color:var(--bg)}'+
+      '.topbar .tabs a:focus-visible{outline:2px solid var(--brass);outline-offset:2px}'+
       '.topbar .seg{display:flex;gap:4px}'+
       '.topbar button{font:inherit;font-size:13px;line-height:1.5;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:2px 12px;border-radius:999px;cursor:pointer}'+
       '.topbar button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}'+
@@ -70,6 +78,12 @@
         if(l) b.lang=l; b.onclick=()=>onPick(v); g.appendChild(b); });
       bar.appendChild(g); return g;
     };
+    if(PAGES.some(p=>p[0]===here)){
+      const nav=document.createElement('nav'); nav.className='tabs';
+      PAGES.forEach(([href])=>{ const a=document.createElement('a'); a.href=href; a.dataset.p=href;
+        if(href===here) a.setAttribute('aria-current','page'); nav.appendChild(a); });
+      bar.appendChild(nav);
+    }
     seg('theme',THEMES.map(([v])=>[v,'']),setTheme);
     seg('lang',[['ja','日本語','ja'],['en','English','en']],setLang).setAttribute('aria-label','Language / 言語');
     const wrap=document.querySelector('.wrap')||document.body;
@@ -81,6 +95,9 @@
       const t=THEMES.find(x=>x[0]===b.dataset.v); b.textContent=tr(t[1],t[2]); });
     bar.querySelector('.theme').setAttribute('aria-label',tr('テーマ','Theme'));
     bar.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===lang));
+    const nav=bar.querySelector('.tabs');
+    if(nav){ nav.setAttribute('aria-label',tr('ページ','Pages'));
+      nav.querySelectorAll('a').forEach(a=>{ const p=PAGES.find(x=>x[0]===a.dataset.p); a.textContent=tr(p[1],p[2]); }); }
   }
   function applyAppName(){
     const m=document.querySelector('link[rel="manifest"]');
