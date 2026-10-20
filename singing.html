@@ -707,11 +707,14 @@ let analyser=null, buf=null, yinBuf=null, micOn=false, micStream=null, micSrc=nu
 let noiseFloor=0.003, voiced=false, lastRms=0, hpF=null, lpF=null;
 /* 音源ごとの検出設定
    fmin/fmax: 検出する音域(Hz)  hp/lp: 前処理フィルタ  win: 解析窓(秒。最低音の周期の約2.5倍)
-   oct/jump: オクターヴ跳躍・急な跳びを何回続いたら採用するか  bridge: 途切れをつなぐ長さ(ms) */
+   oct/jump: オクターヴ跳躍・急な跳びを何回続いたら採用するか  bridge: 途切れをつなぐ長さ(ms)
+   v0/v1: 音があるとみなす周期性の基準(始まり/続いている間。小さいほど厳しい)
+   チェロの低い弦は基音が弱く、弓の雑音も多いので、高域を早めに切り、窓を短くして周期のゆらぎの影響を減らし、
+   周期性の基準を少し緩めている(合成した低音で、雑音が多いときの検出率がおよそ 3割→9割) */
 const PROFILES={
-  voice: {fmin:65, fmax:1100, hp:60,  lp:2200, win:.032, oct:8, jump:3, bridge:150},
-  cello: {fmin:58, fmax:1400, hp:40,  lp:3500, win:.045, oct:3, jump:2, bridge:120},
-  violin:{fmin:180,fmax:2800, hp:140, lp:7000, win:.020, oct:3, jump:2, bridge:120},
+  voice: {fmin:65, fmax:1100, hp:60,  lp:2200, win:.032, oct:8, jump:3, bridge:150, v0:.2,  v1:.35},
+  cello: {fmin:58, fmax:1400, hp:40,  lp:2500, win:.035, oct:3, jump:2, bridge:120, v0:.25, v1:.4},
+  violin:{fmin:180,fmax:2800, hp:140, lp:7000, win:.020, oct:3, jump:2, bridge:120, v0:.2,  v1:.35},
 };
 let P=PROFILES[S.source]||PROFILES.voice;
 function applyProfile(){
@@ -790,8 +793,8 @@ function detect(){
   }
   /* 音の有無は「音量」ではなく「周期性(音程のある音か)」で判定する。
      音量で判定すると、弓でゆっくり立ち上がるロングトーンを雑音として学習してしまうため。
-     始まりは確かな周期性(0.2未満)を要求し、続いている間は少し緩める(0.35未満)。 */
-  const lim=voiced?0.35:0.2;
+     始まりは確かな周期性(声なら0.2未満)を要求し、続いている間は少し緩める(0.35未満)。 */
+  const lim=voiced?P.v1:P.v0;
   if(best>=lim){ voiced=false; if(best>0.45) trackNoise(rms); return null; }
   voiced=true;
   if(tau<0) tau=bestT;
