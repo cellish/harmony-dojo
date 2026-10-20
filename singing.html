@@ -182,7 +182,34 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-r
 }
 .volbox{display:flex;align-items:center;gap:8px}
 .volbox input{width:140px}
-@media (max-width:480px){.sol{font-size:56px}.readout{margin-left:0;text-align:left}}
+#prog-view:empty{display:none}
+/* スマホ: 設定と練習の画面(メーター・グラフ)を行き来しなくて済むよう、余白と飾りを詰める */
+@media (max-width:480px){
+  .wrap{padding-block:12px 24px;gap:14px}
+  header h1{font-size:24px}
+  header p{font-size:13px;line-height:1.6}
+  .practice{gap:8px}
+  .settings{gap:8px 10px}
+  .bench{padding:12px;gap:10px;border-radius:12px}
+  .target{flex-wrap:nowrap;gap:10px;margin-top:6px}
+  .volbox{flex:1 1 120px;min-width:0}.volbox input{width:auto;flex:1;min-width:60px}
+  .status{font-size:12px}
+  .sol{font-size:52px}
+  .solwrap{min-width:1.6em}
+  .tmeta{min-width:0;padding-bottom:2px}
+  .tmeta .deg{font-size:15px}
+  .tmeta .ratio{font-size:12px}
+  .readout{padding-bottom:2px;flex:none}
+  .readout .c{font-size:28px}
+  .meter{height:36px}
+  .scale{margin-top:2px}
+  .tlegend{min-height:0}
+  .flash{font-size:16px;min-height:1.5em}
+  .flash .streak{font-size:12px;margin-left:6px}
+  canvas{height:96px}
+  .ladder{height:52px}
+  .ladder .track{top:24px}.ladder .tick{top:12px}.ladder .voice{top:16px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 [hidden]{display:none!important}
 header a{color:var(--brass)}
@@ -311,7 +338,7 @@ header a{color:var(--brass)}
     <div class="row">
       <button class="chip" type="button" id="micBtn" aria-pressed="false"></button>
       <button class="chip" type="button" id="droneBtn" aria-pressed="false"></button>
-      <label class="volbox"><span class="label" data-en="Volume">音量</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
+      <label class="volbox"><span class="label" data-en="Volume">音量</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.85"></label>
     </div>
     <div class="statusrow">
       <div class="status" id="status"></div>
@@ -455,9 +482,15 @@ const HARM_NAME={d3:['3度下','3rd below'],u3:['3度上','3rd above'],d6:['6度
 const HARM_RATIO={3:[6,5],4:[5,4],8:[8,5],9:[5,3]};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', vol:.6, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3'};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3'};
 const DEF={...S};
-try{Object.assign(S,JSON.parse(localStorage.getItem('drone-settings')||'{}'));}catch(e){}
+try{const sv=JSON.parse(localStorage.getItem('drone-settings')||'{}'); Object.assign(S,sv);
+  // 古い版は音量を倍率のまま保存していた(vol)。つまみの位置に直す
+  if(sv.vol!=null&&sv.volPos==null) S.volPos=sv.vol>0?Math.max(0,Math.min(1,1+Math.log10(sv.vol)/2)):0;
+  delete S.vol;}catch(e){}
+/* 音量のつまみは dB で効かせる(右端 0dB、左に行くほど下がり、-40dB の次は無音)。
+   倍率のままだと、左端の少し右で急に大きくなり、イヤホンでは細かく合わせられないため */
+const volGain=()=>S.volPos>0?Math.pow(10,(S.volPos-1)*2):0;
 if(!['quiz','harm','free','tuner'].includes(S.mode)) S.mode='quiz';
 function saveSettings(){try{localStorage.setItem('drone-settings',JSON.stringify(S));}catch(e){}}
 
@@ -482,7 +515,7 @@ bind('hold','hold',Number,()=>resetHold());
 bind('dronemode','droneMode',v=>v,refreshDrone);
 bind('timbre','timbre',v=>v,refreshDrone);
 bind('anchor','anchor',v=>v,()=>onAnchorChange());
-$('vol').value=S.vol; $('vol').addEventListener('input',e=>{S.vol=+e.target.value; saveSettings(); if(droneGain) droneGain.gain.setTargetAtTime(S.vol,ctx.currentTime,.05); if(mel) mel.g.gain.setTargetAtTime(MEL_LEVEL*S.vol,ctx.currentTime,.05);});
+$('vol').value=S.volPos; $('vol').addEventListener('input',e=>{S.volPos=+e.target.value; saveSettings(); if(droneGain) droneGain.gain.setTargetAtTime(volGain(),ctx.currentTime,.05); if(mel) mel.g.gain.setTargetAtTime(MEL_LEVEL*volGain(),ctx.currentTime,.05);});
 $('auto').checked=S.auto; $('auto').onchange=e=>{S.auto=e.target.checked; saveSettings();};
 $('chime').checked=S.chime; $('chime').onchange=e=>{S.chime=e.target.checked; saveSettings();};
 
@@ -643,7 +676,7 @@ function startDrone(smooth){
     droneVoices().forEach(v=>{const o=ctx.createOscillator(); o.setPeriodicWave(w); o.frequency.value=v.f;
       const g=ctx.createGain(); g.gain.value=v.g*boost; o.connect(g).connect(dest); o.start(); droneNodes.push(o);});
   }
-  droneGain.gain.setTargetAtTime(S.vol,ctx.currentTime,.1);
+  droneGain.gain.setTargetAtTime(volGain(),ctx.currentTime,.1);
   droneOn=true; labelDroneBtn(); keepAwake(true); syncMelody();
 }
 function stopDrone(quick){
@@ -672,7 +705,7 @@ function syncMelody(articulate){
     if(mel){ const m=mel; mel=null; m.g.gain.setTargetAtTime(0,ctx.currentTime,.05); setTimeout(()=>{try{m.o.stop();}catch(e){} m.g.disconnect();},400); }
     return;
   }
-  const f=tonicHz()*Math.pow(2,melodyCents(harm.notes[harm.i])/1200), t=ctx.currentTime, lv=MEL_LEVEL*S.vol;
+  const f=tonicHz()*Math.pow(2,melodyCents(harm.notes[harm.i])/1200), t=ctx.currentTime, lv=MEL_LEVEL*volGain();
   if(!mel){
     const o=ctx.createOscillator(), g=ctx.createGain(); o.setPeriodicWave(softWave()); o.frequency.value=f;
     g.gain.value=0; o.connect(g).connect(out); o.start(); mel={o,g};
@@ -1142,7 +1175,7 @@ function drawTrace(now){
   while(trace.length&&now-trace[0].t>6000) trace.shift();
   while(passMarks.length&&now-passMarks[0].t-passMarks[0].len>6000) passMarks.shift();
   const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
-  if(cv.width!==Math.round(w*dpr)){cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);}
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);}
   g2.setTransform(dpr,0,0,dpr,0,0); g2.clearRect(0,0,w,h);
   const cs=getComputedStyle(document.documentElement), col=n=>cs.getPropertyValue(n).trim();
   const y=c=>h/2-c/60*(h/2-6);
