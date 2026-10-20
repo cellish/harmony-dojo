@@ -742,12 +742,14 @@ let noiseFloor=0.003, voiced=false, lastRms=0, hpF=null, lpF=null;
    fmin/fmax: 検出する音域(Hz)  hp/lp: 前処理フィルタ  win: 解析窓(秒。最低音の周期の約2.5倍)
    oct/jump: オクターヴ跳躍・急な跳びを何回続いたら採用するか  bridge: 途切れをつなぐ長さ(ms)
    v0/v1: 音があるとみなす周期性の基準(始まり/続いている間。小さいほど厳しい)
+   avg: 表示と合格判定に使う高さを、直近この長さ(ms)の平均にする。弦楽器はビブラートの幅が広く(±30セント前後)、
+        一瞬ごとの高さでは針と数字が大きく振れ、中心が合っているのか読み取れないため、揺れの1〜2周期ぶん(0.3秒)をならして中心を見る
    チェロの低い弦は基音が弱く、弓の雑音も多いので、高域を早めに切り、窓を短くして周期のゆらぎの影響を減らし、
    周期性の基準を少し緩めている(合成した低音で、雑音が多いときの検出率がおよそ 3割→9割) */
 const PROFILES={
   voice: {fmin:65, fmax:1100, hp:60,  lp:2200, win:.032, oct:8, jump:3, bridge:150, v0:.2,  v1:.35},
-  cello: {fmin:58, fmax:1400, hp:40,  lp:2500, win:.035, oct:3, jump:2, bridge:120, v0:.25, v1:.4},
-  violin:{fmin:180,fmax:2800, hp:140, lp:7000, win:.020, oct:3, jump:2, bridge:120, v0:.2,  v1:.35},
+  cello: {fmin:58, fmax:1400, hp:40,  lp:2500, win:.035, oct:3, jump:2, bridge:120, v0:.25, v1:.4, avg:300},
+  violin:{fmin:180,fmax:2800, hp:140, lp:7000, win:.020, oct:3, jump:2, bridge:120, v0:.2,  v1:.35, avg:300},
 };
 let P=PROFILES[S.source]||PROFILES.voice;
 function applyProfile(){
@@ -839,12 +841,19 @@ const MIN_RMS=0.0015;
 // 入力メーター表示用の雑音レベル(周期性のない音だけから学習。判定には使わない)
 function trackNoise(r){ noiseFloor=noiseFloor*0.98+Math.min(r,0.02)*0.02; }
 
-const H=[]; let lastGood=null, lastGoodT=0, pend=null, pendN=0;
+const H=[], AV=[]; let lastGood=null, lastGoodT=0, pend=null, pendN=0;
+// 両端を軽く扱う重み(sin²)で平均すると、ビブラートの速さが 4〜7Hz のどれでも揺れがよく消える
+function shown(){
+  if(!P.avg||!AV.length) return lastGood;
+  const now=AV[AV.length-1].t; let sw=0, sl=0;
+  AV.forEach(x=>{const w=Math.sin(Math.PI*(now-x.t+16)/(P.avg+32))**2; sw+=w; sl+=w*x.l;});
+  return Math.pow(2,sl/sw);
+}
 const cents=(a,b)=>1200*Math.log2(a/b);
 function track(raw,now){
   if(raw==null){
-    if(lastGood&&now-lastGoodT<=P.bridge) return lastGood;   // 短い途切れはつなぐ
-    H.length=0; lastGood=null; pend=null; pendN=0; return null;
+    if(lastGood&&now-lastGoodT<=P.bridge) return shown();   // 短い途切れはつなぐ
+    H.length=0; AV.length=0; lastGood=null; pend=null; pendN=0; return null;
   }
   let f=raw;
   if(lastGood){
@@ -855,13 +864,18 @@ function track(raw,now){
       else { pend=f; pendN=1; f=f*(d>0?.5:2); }
     }else if(Math.abs(d)>80){
       // 急な跳び: 3回続けて同じ高さが出たら採用
-      if(pend&&Math.abs(cents(f,pend))<50){ if(++pendN<P.jump) return lastGood; H.length=0; pend=null; pendN=0; }
-      else { pend=f; pendN=1; return lastGood; }
+      if(pend&&Math.abs(cents(f,pend))<50){ if(++pendN<P.jump) return shown(); H.length=0; pend=null; pendN=0; }
+      else { pend=f; pendN=1; return shown(); }
     }else{ pend=null; pendN=0; }
   }
   H.push(f); if(H.length>5) H.shift();
   const m=[...H].sort((x,y)=>x-y)[H.length>>1];
-  lastGood=m; lastGoodT=now; return m;
+  lastGood=m; lastGoodT=now;
+  if(!P.avg) return m;
+  // 揺れの中心: 直近 P.avg ms の平均(セントで平均する)。別の音に移ったら(H を空にしたら)平均もやり直す
+  if(H.length===1) AV.length=0;
+  AV.push({t:now,l:Math.log2(m)}); while(AV.length&&now-AV[0].t>P.avg) AV.shift();
+  return shown();
 }
 function drawLevel(){
   const db=r=>Math.max(0,Math.min(1,(20*Math.log10(Math.max(r,1e-5))+60)/60));
