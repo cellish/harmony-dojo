@@ -126,10 +126,12 @@ header a{color:var(--brass)}
 .setlink .setsum{margin-left:6px}
 .setbox{display:flex;align-items:center;gap:10px;min-width:0}
 .pickhead .label{white-space:nowrap}
-/* 目標の音律: 出題のしかたの下に1行で */
-.tunrow{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:10px}
-.tunrow .chips{margin-top:0;gap:6px}
-.tunrow .chip{font-size:13px;padding:4px 10px}
+/* 出題のしかたと目標の音律は、区切り線を挟んで横に並べる(狭い画面では折り返す) */
+.pickrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:8px}
+.pickrow .chips{margin-top:0;gap:6px}
+.pickrow .chip{font-size:13px;padding:4px 10px}
+.tunrow{display:flex;align-items:center;gap:8px;padding-left:14px;border-left:1px solid var(--line)}
+@media (max-width:420px){.tunrow{padding-left:0;border-left:0}}
 .setsum span{white-space:nowrap}
 .setsum{font-size:12px;color:var(--muted);font-family:var(--mono);text-align:right;line-height:1.4}
 dialog#settingsDlg{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--bg);color:var(--ink);
@@ -245,6 +247,7 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
     <div>
       <div class="pickhead"><div class="label" data-en="Question mode">出題のしかた</div>
         <div class="setbox"><button class="setlink" style="margin-left:0;text-align:right" type="button" id="openSettings" aria-haspopup="dialog" title="押すと設定を開きます" data-en-title="Open settings"><span aria-hidden="true">⚙</span><span class="setsum" id="setSum"></span><span class="chev" aria-hidden="true">›</span></button></div></div>
+      <div class="pickrow">
       <div class="chips" id="picks">
         <button class="chip" type="button" id="pick-fixed" aria-pressed="true" data-en="Chosen interval">選んだ音程</button>
         <button class="chip" type="button" id="pick-random" aria-pressed="false" data-en="Random">ランダム</button>
@@ -256,6 +259,7 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
           <button class="chip" type="button" id="tun-pyth" aria-pressed="false" data-en="Pythagorean">ピタゴラス</button>
           <button class="chip" type="button" id="tun-et" aria-pressed="false" data-en="Equal">平均律</button>
         </div>
+      </div>
       </div>
     </div>
 
@@ -296,7 +300,6 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
     </div>
 
     <div class="knob">
-      <div class="label" id="knobLabel">上の音を調整</div>
       <input type="range" id="slider" min="-40" max="40" step="0.1" value="0" aria-label="動かす音の高さ" data-en-aria-label="Pitch of the moving note">
       <div class="nudges" id="nudges"></div>
     </div>
@@ -518,8 +521,6 @@ const VOL=0.11;
 const TONES={
   organ:{label:'オルガン', labelE:'Organ', base:n=>({1:1,2:.55,3:.32,4:.26,5:.1,6:.1,8:.09}[n]??(n<=12?.25/(n*n):0)), boost:.16},
   soft: {label:'やわらか', labelE:'Soft', base:n=>n<=6?Math.pow(n,-2.4):0, boost:.12},
-  // 明るい: 弦楽器に近い 1/n の倍音列。耳に刺さる 2.5〜5 kHz 付近は実際の周波数で緩やかに減衰させる
-  bright:{label:'明るい',   labelE:'Bright', base:(n,hz)=>Math.pow(n,-1)*(n<=4?1.15:1)/(1+Math.pow(n*hz/2800,2.5)), boost:.14},
 };
 let tone='organ';
 try{const t=localStorage.getItem('unari-tone'); if(TONES[t]) tone=t;}catch(e){}
@@ -664,7 +665,6 @@ function newQuestion(reroll=true){
   [0,1,2].forEach(k=>$('oct-'+k).setAttribute('aria-pressed',k===oct));
   ['upper','lower'].forEach(m=>$('mode-'+m).setAttribute('aria-pressed',m===mode));
   TUNS.forEach(t=>$('tun-'+t).setAttribute('aria-pressed',t===tun));
-  $('knobLabel').textContent=mode==='upper'?tr('上の音を調整','Adjust the upper note'):tr('下の音を調整','Adjust the lower note');
   $('qname').textContent=cur.full; showQName();
   $('qmeta').textContent=noteLabel();
   renderStats();
@@ -874,7 +874,6 @@ onLang(()=>{
   labelStatic(); labelPlay(); labelPick(); labelA4Presets();
   Object.keys(TONES).forEach(k=>{ $('tone-'+k).textContent=tr(TONES[k].label,TONES[k].labelE); });
   updateIvSlider();
-  $('knobLabel').textContent=mode==='upper'?tr('上の音を調整','Adjust the upper note'):tr('下の音を調整','Adjust the lower note');
   $('qname').textContent=cur.full; $('qmeta').textContent=noteLabel();
   updateBeat(); renderHist(); renderStats(); updateSummary();
   if(answered) showResult();
