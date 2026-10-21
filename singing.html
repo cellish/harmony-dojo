@@ -218,6 +218,10 @@ header a{color:var(--brass)}
 .modes button{flex:1 1 0;min-width:0;font:inherit;font-weight:700;font-size:14px;border:0;background:none;color:var(--muted);padding:7px 4px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .modes button:hover{color:var(--ink)}
 .modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+/* ハモリの種類: 練習の種類より一段控えめに */
+.harmkind{max-width:340px;margin-top:-4px}
+.harmkind button{font-size:13px;padding:5px 4px}
+.scalecap{font-weight:400;letter-spacing:0;margin-left:6px}
 @media (max-width:420px){.modes button{font-size:13px}}
 /* ハモリ: 旋律と自分のパートを2段で表示 */
 .phrase{display:flex;flex-direction:column;gap:2px;overflow-x:auto;font-size:15px;margin-top:-6px}
@@ -249,8 +253,12 @@ header a{color:var(--brass)}
       <button type="button" data-mode="tuner" data-en="Tuner">チューナー</button>
     </div>
     <p class="note" id="modeNote"></p>
+    <div class="modes harmkind" id="harmKind" role="group" aria-label="ハモリの種類" data-en-aria-label="Harmony type" data-modes="harm">
+      <button type="button" data-kind="iv" data-en="Fixed interval">決まった音程で</button>
+      <button type="button" data-kind="duet" data-en="Two-part pieces">2声の曲</button>
+    </div>
     <div class="settings">
-      <div class="field"><label class="label" for="key" data-en="Tonic">主音</label><select id="key"></select></div>
+      <div class="field"><label class="label" for="key"><span data-en="Tonic">主音</span><span id="keyFinal" data-en=" (final)" hidden>(終止音)</span></label><select id="key"></select></div>
       <div class="field" data-modes="quiz harm free"><label class="label" for="set" data-en="Scale">音階</label>
         <select id="set"><option value="major" data-en="Major scale">長音階</option><option value="minor" data-en="Minor scale (natural)">短音階(自然)</option><option value="chrom" data-en="All 12 semitones">半音階すべて</option></select></div>
       <div class="field" data-modes="quiz"><label class="label" for="prog" data-en="Chord progression">和音の進行</label><select id="prog"></select></div>
@@ -258,10 +266,11 @@ header a{color:var(--brass)}
       <div class="field" data-modes="quiz"><label class="label" for="order" data-en="Order">出題の順番</label>
         <select id="order"><option value="random" data-en="Random">ランダム</option><option value="up" data-en="Ascending scale">上行音階</option><option value="down" data-en="Descending scale">下行音階</option><option value="weak" data-en="Focus on weak notes">苦手を重点</option></select></div>
       <div class="field" data-modes="harm"><label class="label" for="phrase" data-en="Melody">旋律</label><select id="phrase"></select></div>
-      <div class="field" data-modes="harm"><label class="label" for="harmIv" data-en="Your part">ハモる音</label>
+      <div class="field" data-modes="harm"><label class="label" for="duet"><span data-en="Piece">曲</span><span class="scalecap" id="duetScale"></span></label><select id="duet"></select></div>
+      <div class="field" data-modes="harm"><label class="label" for="harmIv" data-en="Harmony line">ハモる音</label>
         <select id="harmIv"><option value="d3" data-en="3rd below">3度下</option><option value="u3" data-en="3rd above">3度上</option><option value="d6" data-en="6th below">6度下</option></select></div>
       <div class="field" data-modes="harm"><label class="label" for="part" data-en="Your part">あなたのパート</label>
-        <select id="part"><option value="lo" data-en="Lower part">下のパート</option><option value="hi" data-en="Upper part">上のパート</option></select></div>
+        <select id="part"><option value="lo" data-en="Lower part">下声(下のパート)</option><option value="hi" data-en="Upper part">上声(上のパート)</option></select></div>
       <div class="field"><label class="label" for="tuning" data-en="Target tuning">目標の音律</label>
         <select id="tuning"><option value="just" data-en="Just">純正</option><option value="pyth" data-en="Pythagorean">ピタゴラス</option><option value="et" data-en="Equal">平均律</option></select></div>
     </div>
@@ -410,8 +419,8 @@ header a{color:var(--brass)}
         <b>純正とピタゴラス</b>：純正で合わせると、正しい位置で声がドローンに溶け込み、うなりが消えます。ピタゴラス音律は5度だけを積み重ねた音律で、3度と6度が純正よりかなり広く(長3度で約22セント高く)、導音(シ)が主音に強く引き寄せられます。</li>
       <li data-en="<b>Accompanying chord</b>: the right height of a note depends on the chord underneath. In C major, Re is 9:8 above Do over the V chord (G–B–D) but 10:9 over the ii chord (D–F–A), 21.5 cents lower. Choose a chord and you will be asked to sing its chord tones in just intonation. Choose a chord progression and each pass moves on to the next chord, asking for the chord tone closest to your previous note; where the same note name continues, as in ii→V, you will feel its pitch shift.">
         <b>伴奏の和音</b>：同じ音でも、下で鳴る和音によって正しい高さが変わります。ハ長調のレは、Ⅴの和音(ソ・シ・レ)の上では主音から 9:8、Ⅱの和音(レ・ファ・ラ)の上では 10:9 で、21.5セント低くなります。和音を選ぶと、その和音の構成音を純正で出題します。「和音の進行」を選ぶと、合格するたびに次の和音へ進み、前の音にいちばん近い構成音を出題します。Ⅱm→Ⅴ のように同じ音名が続くところで、高さがずれるのを体験できます。</li>
-      <li data-en="<b>Harmony</b>: the app plays a melody and you sing a 3rd or 6th against it. The target is the height that forms a pure interval with the melody note, so it can differ slightly from the scale note sung over the drone alone. Choose a two-part piece (such as Pachelbel’s Canon) under “Melody” to sing the upper or lower part while the app plays the other.">
-        <b>ハモリ</b>：アプリが旋律を鳴らし、あなたは3度や6度でハモります。目標は旋律の音と純正の音程になる高さなので、ドローンだけに合わせたときの音階の高さとわずかに違うことがあります。「旋律」で2声の曲(パッヘルベルのカノンなど)を選ぶと、上か下のパートを歌い、もう一方をアプリが鳴らします。</li>
+      <li data-en="<b>Harmony</b>: the app plays a melody and you sing a 3rd or 6th against it. The target is the height that forms a pure interval with the melody note, so it can differ slightly from the scale note sung over the drone alone. Switch the type to “Two-part pieces” to sing the upper or lower part of a piece such as Pachelbel’s Canon or a Fux counterpoint while the app plays the other.">
+        <b>ハモリ</b>：アプリが旋律を鳴らし、あなたは3度や6度でハモります。目標は旋律の音と純正の音程になる高さなので、ドローンだけに合わせたときの音階の高さとわずかに違うことがあります。種類を「2声の曲」にすると、パッヘルベルのカノンやフックスの対位法などの上か下のパートを歌い、もう一方をアプリが鳴らします。</li>
       <li data-en="<b>Tuner</b>: for setting your instrument to the key. The table shows how many cents each note of the chosen key and tuning differs from equal temperament.">
         <b>チューナー</b>：楽器を調に合わせるためのモードです。選んだ調と音律で、各音が平均律から何セントずれるかを表で示します。</li>
       <li data-en="<b>Grow your ear</b>: tune with your eyes closed and then check, rather than staring at the meter. Vibrato makes it hard to stay within the tolerance, so start with a straight tone.">
@@ -449,6 +458,7 @@ DEGREES.forEach(d=>{d.just=1200*Math.log2(d.p/d.q); d.et=d.s*100;
 const SETS={major:[0,2,4,5,7,9,11], minor:[0,2,3,5,7,8,10], chrom:[0,1,2,3,4,5,6,7,8,9,10,11]};
 // ハモリの2声の曲で使う旋法(主音=終止音)。出題の音階の選択肢には出さない
 const MODES={dorian:[0,2,3,5,7,9,10]};
+const SCALE_NAME={major:['長音階','major'],dorian:['ドリア旋法','Dorian']};
 const NOTE_NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const gcd=(a,b)=>b?gcd(b,a%b):a;
 // 比を 1 以上 2 未満(主音から1オクターヴ以内)にそろえて約分する
@@ -503,7 +513,7 @@ const DUETS=[
     {hi:[2,2,3,4,4,3,2,1,0,0,1,2,2,1,1, 2,2,3,4,4,3,2,1,0,0,1,2,1,0,0],
      lo:[0,0,1,2,2,1,0,-1,-5,-5,-1,0,0,-3,-3, 0,0,1,2,2,1,0,-1,-5,-5,-1,0,-3,-7,-7]}],
 ];
-const duetOn=()=>DUETS.some(x=>x[0]===S.phrase);
+const duetOn=()=>S.harmKind==='duet';
 // 2つの音の音程(半音の数を12で割った余り) → 純正の比。2度・7度・増4度は比を決めない(音階どおりの高さ)
 const PURE={0:[1,1],3:[6,5],4:[5,4],5:[4,3],7:[3,2],8:[8,5],9:[5,3]};
 const IV_NAME={0:['同度・8度','unison/octave'],3:['短3度','minor 3rd'],4:['長3度','major 3rd'],5:['完全4度','perfect 4th'],
@@ -513,12 +523,15 @@ const HARM_OFF={d3:-2,u3:2,d6:-5};
 const HARM_NAME={d3:['3度下','3rd below'],u3:['3度上','3rd above'],d6:['6度下','6th below']};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3', part:'lo'};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3', part:'lo', harmKind:'iv', duet:'canon'};
 const DEF={...S};
 try{const sv=JSON.parse(localStorage.getItem('drone-settings')||'{}'); Object.assign(S,sv);
   // 古い版は音量を倍率のまま保存していた(vol)。つまみの位置に直す
   if(sv.vol!=null&&sv.volPos==null) S.volPos=sv.vol>0?Math.max(0,Math.min(1,1+Math.log10(sv.vol)/2)):0;
-  delete S.vol;}catch(e){}
+  delete S.vol;
+  // 以前は2声の曲も「旋律」の中にあった。種類と曲に分けて引き継ぐ
+  if(!sv.harmKind&&DUETS.some(x=>x[0]===sv.phrase)){ S.harmKind='duet'; S.duet=sv.phrase; S.phrase='scale'; }}catch(e){}
+if(!['iv','duet'].includes(S.harmKind)) S.harmKind='iv';
 /* 音量のつまみは dB で効かせる(右端 0dB、左に行くほど下がり、-40dB の次は無音)。
    倍率のままだと、左端の少し右で急に大きくなり、イヤホンでは細かく合わせられないため */
 const volGain=()=>S.volPos>0?Math.pow(10,(S.volPos-1)*2):0;
@@ -537,7 +550,12 @@ buildChordOpts(); buildPhraseOpts();
 bind('set','set',v=>v,()=>{buildChordOpts(); applyMode(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
 bind('chord','chord',v=>v,()=>{refreshDrone(); resetSeq(); restartTargets(); renderStats();});
 bind('prog','prog',v=>v,()=>{applyMode(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
-bind('phrase','phrase',v=>v,()=>{ applyMode(); startPhrase(); });
+bind('phrase','phrase',v=>v,()=>startPhrase());
+bind('duet','duet',v=>v,()=>{ labelDuetScale(); startPhrase(); });
+document.querySelectorAll('#harmKind button').forEach(b=>b.onclick=()=>{
+  if(S.harmKind===b.dataset.kind) return;
+  S.harmKind=b.dataset.kind; saveSettings(); applyMode(); buildLadder(); startPhrase();
+});
 bind('harmIv','harmIv',v=>v,()=>startPhrase());
 bind('part','part',v=>v,()=>startPhrase());
 bind('order','order',v=>v,()=>{resetSeq(); nextTarget();});
@@ -954,12 +972,14 @@ function buildProgOpts(){
   el.value=S.prog; el.disabled=!list.length;
 }
 function buildPhraseOpts(){
-  const el=$('phrase'), op=([id,ja,en])=>`<option value="${id}">${tr(ja,en)}</option>`;
-  el.innerHTML=`<optgroup label="${tr('旋律に決まった音程でハモる','Harmonize at a fixed interval')}">${PHRASES.map(op).join('')}</optgroup>`
-    +`<optgroup label="${tr('2声の曲','Two-part pieces')}">${DUETS.map(op).join('')}</optgroup>`;
-  if(![...PHRASES,...DUETS].some(x=>x[0]===S.phrase)) S.phrase='scale';
-  el.value=S.phrase;
+  const op=([id,ja,en])=>`<option value="${id}">${tr(ja,en)}</option>`;
+  $('phrase').innerHTML=PHRASES.map(op).join(''); $('duet').innerHTML=DUETS.map(op).join('');
+  if(!PHRASES.some(x=>x[0]===S.phrase)) S.phrase='scale';
+  if(!DUETS.some(x=>x[0]===S.duet)) S.duet='canon';
+  $('phrase').value=S.phrase; $('duet').value=S.duet; labelDuetScale();
 }
+// 曲の見出しの横に、その曲の音階を出す(2声の曲では「音階」の設定を使わないため)
+function labelDuetScale(){ const du=DUETS.find(x=>x[0]===S.duet), n=SCALE_NAME[(du&&du[3].scale)||'major']; $('duetScale').textContent=`(${tr(n[0],n[1])})`; }
 // 出題・判定に使う音の一覧(チューナーは12音すべて、和音を選んでいればその構成音)
 let poolKey='', poolCache=[];
 function pool(){
@@ -1038,7 +1058,7 @@ function renderProg(){
 /* ---------- ハモリ ---------- */
 /* mel: アプリが鳴らす音、mine: あなたが歌う音(どちらも音階の何番目か)、play: mel を鳴らしやすい高さにずらしたもの */
 let harm={mel:[],mine:[],play:[],i:0,duet:false};
-const curDuet=()=>DUETS.find(x=>x[0]===S.phrase);
+const curDuet=()=>duetOn()?DUETS.find(x=>x[0]===S.duet)||DUETS[0]:null;
 const harmScale=()=>{ const du=curDuet(); return du?(MODES[du[3].scale]||SETS.major):SETS[S.set==='minor'?'minor':'major']; };
 // x.5 は半音上げた音(第7音を上げると次のオクターヴの主音になることはない範囲で使う)
 const idxDeg=i=>{ const L=harmScale(), b=Math.floor(i), up=i-b>0?1:0; return {d:DEGREES[(L[((b%7)+7)%7]+up)%12], oct:Math.floor(b/7)}; };
@@ -1085,7 +1105,7 @@ function renderPhrase(){
   const cell=(t,k)=>`<span class="n${k===harm.i?' cur':k<harm.i?' done':''}">${t}</span>`;
   const row=a=>a.map((n,k)=>cell(solOf(idxDeg(n).d),k)).join('');
   const ln=(lb,a)=>`<div class="ln"><span class="lb">${lb}</span>${row(a)}</div>`;
-  const other=harm.duet?tr(S.part==='hi'?'下のパート':'上のパート',S.part==='hi'?'LOWER':'UPPER'):tr('旋律','MELODY');
+  const other=harm.duet?tr(S.part==='hi'?'下声':'上声',S.part==='hi'?'LOWER':'UPPER'):tr('旋律','MELODY');
   // 2声の曲では、上のパートを上の段に置く
   box.innerHTML=harm.duet&&S.part==='hi'?ln(tr('あなた','YOU'),harm.mine)+ln(other,harm.mel):ln(other,harm.mel)+ln(tr('あなた','YOU'),harm.mine);
   const cur=box.querySelector('.n.cur'); if(cur) cur.scrollIntoView({block:'nearest',inline:'center'});
@@ -1120,8 +1140,8 @@ function showTarget(){
     const md=idxDeg(harm.mel[harm.i]).d;
     if(harm.duet){
       const diff=Math.abs(semis(harm.mine[harm.i])-semis(harm.mel[harm.i])), nm=IV_NAME[diff%12];
-      const who=tr(S.part==='hi'?'下のパート':'上のパート',S.part==='hi'?'the lower part':'the upper part');
-      $('deg').textContent=nm?tr(`${who}の「${md.sol}」と${nm[0]}`,`A ${nm[1]} with ${who}'s ${md.solE}`):tr(`${who}は「${md.sol}」`,`${who} is on ${md.solE}`);
+      const who=tr(S.part==='hi'?'下声':'上声',S.part==='hi'?'the lower part':'the upper part');
+      $('deg').textContent=nm?tr(`${who}「${md.sol}」と${nm[0]}`,`A ${nm[1]} with ${who}'s ${md.solE}`):tr(`${who}は「${md.sol}」`,`${who} is on ${md.solE}`);
     }else{
       const [ja,en]=HARM_NAME[S.harmIv];
       $('deg').textContent=tr(`旋律「${md.sol}」の${ja}`,`${en} the melody's ${md.solE}`);
@@ -1151,8 +1171,15 @@ function applyMode(){
   document.querySelectorAll('[data-modes]').forEach(el=>{ el.hidden=!el.dataset.modes.split(' ').includes(S.mode); });
   // 進行を選んでいるときは、和音と出題の順番は進行が決める
   if(progOn()) ['chord','order'].forEach(id=>$(id).closest('.field').hidden=true);
-  // ハモリ: 決まった音程でハモる旋律では「ハモる音」、2声の曲では「あなたのパート」を出す
-  if(S.mode==='harm'){ $('harmIv').closest('.field').hidden=duetOn(); $('part').closest('.field').hidden=!duetOn(); }
+  /* ハモリ: 種類ごとに要る項目だけを出す
+     決まった音程で = 音階・旋律・ハモる音 / 2声の曲 = 曲・あなたのパート(音階は曲が決める) */
+  const inHarm=S.mode==='harm', du=inHarm&&duetOn();
+  document.querySelectorAll('#harmKind button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.kind===S.harmKind));
+  if(inHarm){ ['set','phrase','harmIv'].forEach(id=>$(id).closest('.field').hidden=du); ['duet','part'].forEach(id=>$(id).closest('.field').hidden=!du); }
+  $('keyFinal').hidden=!du;
+  // ハモリの旋律は長・短だけ(半音階のときは長音階として扱い、そう表示する)
+  $('set').querySelector('[value=chrom]').disabled=inHarm;
+  $('set').value=inHarm&&S.set==='chrom'?'major':S.set;
   labelMode(); labelQuizBtns();
   if(S.mode==='tuner') renderTuner();
 }
