@@ -55,11 +55,10 @@ button.primary{background:var(--brass);border-color:var(--brass);color:#fff;font
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.primary{color:#1B1408}}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 button:disabled{opacity:.45;cursor:default}
-/* 操作ボタンは「鳴らす・決定(答えた後は次の問題)」と「やり直し・別の問題」の2段に分け、各段は1行に並べる */
+/* 操作ボタン「鳴らす・決定(答えた後は次の問題)・やり直し・別の問題」は1行に並べる。主な2つを広めに */
 .actions{display:flex;gap:8px}
 .actions .btn{flex:1 1 0;min-width:0;white-space:nowrap;padding-inline:6px}
-.actions.sub{margin-top:-10px}
-.actions.sub .btn{flex:0 1 auto;padding-inline:14px;font-size:14px}
+.actions .btn.primary{flex-grow:1.4}
 /* スマホでは主な操作を画面下に固定し、つまみを動かしながら押せるようにする */
 @media (max-width:640px){
   .actions.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
@@ -70,12 +69,13 @@ button:disabled{opacity:.45;cursor:default}
 .opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:-6px}
 .opts .chips{margin-top:0;gap:6px}
 .opts .chip{font-size:13px;padding:4px 10px}
-.tonegrp{display:flex;align-items:center;gap:8px;padding-left:14px;border-left:1px solid var(--line)}
+/* 動かす音(上/下)は、鳴らす声部の選択の横に区切り線を挟んで並べる */
+.modegrp{display:flex;align-items:center;gap:8px;padding-left:14px;border-left:1px solid var(--line)}
 @media (max-width:420px){
   .bench{padding:16px 12px}
   .actions{gap:6px}
   .actions .btn{font-size:13px;padding-inline:2px}
-  .tonegrp{padding-left:0;border-left:0}
+  .modegrp{padding-left:0;border-left:0}
 }
 .knob{display:flex;flex-direction:column;gap:10px}
 input[type=range]{width:100%;accent-color:var(--brass);height:28px}
@@ -126,6 +126,10 @@ header a{color:var(--brass)}
 .setlink .setsum{margin-left:6px}
 .setbox{display:flex;align-items:center;gap:10px;min-width:0}
 .pickhead .label{white-space:nowrap}
+/* 目標の音律: 出題のしかたの下に1行で */
+.tunrow{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:10px}
+.tunrow .chips{margin-top:0;gap:6px}
+.tunrow .chip{font-size:13px;padding:4px 10px}
 .setsum span{white-space:nowrap}
 .setsum{font-size:12px;color:var(--muted);font-family:var(--mono);text-align:right;line-height:1.4}
 dialog#settingsDlg{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--bg);color:var(--ink);
@@ -213,11 +217,8 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
       </fieldset>
 
       <fieldset class="group">
-        <legend data-en="Moving note<span>The other note stays fixed</span>">動かす音<span>もう一方は基準音として固定</span></legend>
-        <div class="chips" id="modes">
-          <button class="chip" type="button" id="mode-upper" aria-pressed="true" data-en="Move the upper note">上の音を動かす</button>
-          <button class="chip" type="button" id="mode-lower" aria-pressed="false" data-en="Move the lower note">下の音を動かす</button>
-        </div>
+        <legend data-en="Timbre">音色</legend>
+        <div class="chips" id="tones"></div>
       </fieldset>
 
       <h3 class="dlgsec" data-en="BOTH PAGES (Listen and Sing)">両ページ共通(「聴く」「歌う」)</h3>
@@ -249,7 +250,13 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
         <button class="chip" type="button" id="pick-random" aria-pressed="false" data-en="Random">ランダム</button>
         <button class="chip" type="button" id="pick-weak" aria-pressed="false" data-en="Focus on weak spots">苦手を重点</button>
       </div>
-      <p class="note" id="pickNote" style="margin-top:6px;max-width:none"></p>
+      <div class="tunrow"><span class="label" data-en="Target tuning">目標の音律</span>
+        <div class="chips" id="tunings">
+          <button class="chip" type="button" id="tun-just" aria-pressed="true" data-en="Just">純正</button>
+          <button class="chip" type="button" id="tun-pyth" aria-pressed="false" data-en="Pythagorean">ピタゴラス</button>
+          <button class="chip" type="button" id="tun-et" aria-pressed="false" data-en="Equal">平均律</button>
+        </div>
+      </div>
     </div>
 
     <div id="ivBox">
@@ -271,8 +278,6 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
       <button class="btn primary play" id="play"></button>
       <button class="btn primary" id="submit" data-en="Lock in">ここで決定</button>
       <button class="btn primary" id="nextq" data-en="Next question ▶" hidden>次の問題 ▶</button>
-    </div>
-    <div class="actions sub">
       <button class="btn" id="retry" title="動かす音を出題時の位置に戻す" data-en-title="Return the moving note to its starting position" data-en="Retry">やり直し</button>
       <button class="btn" id="newq" data-en="Skip">別の問題</button>
     </div>
@@ -282,7 +287,12 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
         <button class="chip" type="button" id="voice-ref" aria-pressed="false" data-en="Reference only">基準音のみ</button>
         <button class="chip" type="button" id="voice-move" aria-pressed="false" data-en="Moving only">動かす音のみ</button>
       </div>
-      <div class="tonegrp"><span class="label" data-en="Timbre">音色</span><div class="chips" id="tones"></div></div>
+      <div class="modegrp" title="もう一方は基準音として固定" data-en-title="The other note stays fixed"><span class="label" data-en="Move">動かす音</span>
+        <div class="chips" id="modes">
+          <button class="chip" type="button" id="mode-upper" aria-pressed="true" data-en="Upper">上</button>
+          <button class="chip" type="button" id="mode-lower" aria-pressed="false" data-en="Lower">下</button>
+        </div>
+      </div>
     </div>
 
     <div class="knob">
@@ -324,6 +334,7 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
     <div class="hist" id="hist"></div>
 
     <h3 data-en="Results by interval">音程別の成績</h3>
+    <p class="note" id="statsTun" hidden></p>
     <div style="overflow-x:auto"><table>
       <thead><tr><th data-en="Interval">音程</th><th class="n" data-en="Tries">回数</th><th class="n" data-en="Recent error">最近の誤差</th><th class="n" data-en="Chance in “Focus”">重点出題の確率</th></tr></thead>
       <tbody id="stats"></tbody>
@@ -387,8 +398,21 @@ let ctx=null, oscL=null, oscU=null, gL=null, gU=null, master=null, playing=false
 
 /* 動かす音の「平均律の位置からのずれ」= offset(cent)。
    上を動かす: 純正は +dev の位置。下を動かす: 純正は −dev の位置。 */
-const target=()=>mode==='upper'?cur.dev:-cur.dev;
+const justTarget=()=>mode==='upper'?cur.dev:-cur.dev;
 const pythTarget=()=>mode==='upper'?cur.pdev:-cur.pdev;
+/* 目標の音律: just=純正(唸りが消える) / pyth=ピタゴラス / et=平均律。
+   ピタゴラスと平均律は唸りが残る位置が正解なので、その位置での唸りの速さを手がかりに示す */
+const TUNS=['just','pyth','et'];
+let tun='just';
+try{const t=localStorage.getItem('unari-tuning'); if(TUNS.includes(t)) tun=t;}catch(e){}
+const target=()=>tun==='just'?justTarget():tun==='pyth'?pythTarget():0;
+const tunName=(t=tun)=>t==='just'?tr('純正','just'):t==='pyth'?tr('ピタゴラス','Pythagorean'):tr('平均律','equal temperament');
+// 今の音律での比の表記(平均律は 2 の 12 乗根の何乗か)
+function ratioText(){
+  if(tun==='just') return `${cur.p}:${cur.q}`;
+  if(tun==='pyth') return `${cur.pp}:${cur.pq}`;
+  return `2^(${Math.round(cur.et/100)}/12)`;
+}
 function freqs(o=offset){
   if(mode==='upper') return {L:ref.f, U:ref.f*Math.pow(2,(cur.et+o)/1200)};
   return {U:ref.f, L:ref.f*Math.pow(2,(-cur.et+o)/1200)};
@@ -401,10 +425,17 @@ const ivPct=i=>i/(NIV-1)*100;
 INTERVALS.forEach((iv,i)=>{
   const t=document.createElement('button');
   t.type='button'; t.className='t'; t.id='chip-'+iv.id; t.style.left=ivPct(i)+'%';
-  t.innerHTML=`<span class="r"><span>${iv.p}</span><span class="rs">:</span><span>${iv.q}</span></span><b></b><span class="ab">${iv.id}</span>`;
+  t.innerHTML=`<span class="r"></span><b></b><span class="ab">${iv.id}</span>`;
   t.addEventListener('click',e=>{e.stopPropagation(); selectIv(i);});
   ivTrack.insertBefore(t,ivKnob);
 });
+// 目盛りの上の比は、目標の音律に合わせて書き換える(平均律では比を出さない)
+function labelTicks(){
+  INTERVALS.forEach(iv=>{ const [a,b]=tun==='pyth'?[iv.pp,iv.pq]:[iv.p,iv.q];
+    const r=$('chip-'+iv.id).querySelector('.r');
+    r.innerHTML=tun==='et'?'':`<span>${a}</span><span class="rs">:</span><span>${b}</span>`; });
+}
+labelTicks();
 function selectIv(i){
   i=Math.max(0,Math.min(NIV-1,i));
   if(pick!=='fixed') setPick('fixed');   // 自分で選んだら「選んだ音程」の出題に戻す
@@ -417,9 +448,9 @@ function updateIvSlider(){
   INTERVALS.forEach(iv=>$('chip-'+iv.id).classList.toggle('on',iv===baseIv));
   $('ivName').textContent=cur.name;
   $('ivAb').textContent=baseIv.id+(oct?` +${oct}oct`:'');
-  $('ivRatio').textContent=`${cur.p}:${cur.q}`;
+  $('ivRatio').textContent=ratioText();
   $('ivSemi').textContent=tr(`半音 ${Math.round(cur.et/100)} 個`,`${Math.round(cur.et/100)} semitones`);
-  ivKnob.setAttribute('aria-valuenow',i+1); ivKnob.setAttribute('aria-valuetext',`${cur.name} ${cur.p}:${cur.q}`);
+  ivKnob.setAttribute('aria-valuenow',i+1); ivKnob.setAttribute('aria-valuetext',`${cur.name} ${ratioText()}`);
   $('ivDown').disabled=i===0; $('ivUp').disabled=i===NIV-1;
 }
 // つまみやバーを引きずって選ぶ
@@ -448,6 +479,10 @@ $('ivUp').onclick=()=>selectIv(INTERVALS.indexOf(baseIv)+1);
   b.onclick=()=>setOffset(offset+d);
   $('nudges').appendChild(b);
 });
+TUNS.forEach(t=>{
+  $('tun-'+t).onclick=()=>{ if(t===tun) return; tun=t; try{localStorage.setItem('unari-tuning',t);}catch(e){}
+    labelTicks(); labelStatic(); newQuestion(false); };
+});
 ['upper','lower'].forEach(m=>{
   $('mode-'+m).onclick=()=>{mode=m; try{localStorage.setItem('unari-mode',m);}catch(e){} newQuestion(false);};
 });
@@ -455,7 +490,7 @@ const sg=v=>(v>0.05?'+':v<-0.05?'':'±')+v.toFixed(1);
 // 言語で変わる、作りつけの部分の文言(音程表・目盛りとボタンの説明)
 function labelStatic(){
   $('tbl').innerHTML=INTERVALS.map(iv=>`<tr><td>${ivName(iv)}${iv.sub?tr('('+iv.sub+')',' ('+iv.subE+')'):''}</td><td>${iv.p}:${iv.q}</td><td class="n">${sg(iv.dev)}</td><td>${iv.pp}:${iv.pq}</td><td class="n">${sg(iv.pdev)}</td></tr>`).join('');
-  INTERVALS.forEach(iv=>{ $('chip-'+iv.id).title=`${ivName(iv)} ${iv.p}:${iv.q}`; });
+  INTERVALS.forEach(iv=>{ $('chip-'+iv.id).title=tun==='pyth'?`${ivName(iv)} ${iv.pp}:${iv.pq}`:tun==='et'?ivName(iv):`${ivName(iv)} ${iv.p}:${iv.q}`; });
   $('nudges').querySelectorAll('button').forEach(b=>{ const d=+b.dataset.d, a=Math.abs(d);
     b.title=tr(`${d>0?'上げる':'下げる'} ${a} セント`,`${d>0?'Raise':'Lower'} by ${a} cent${a===1?'':'s'}`); });
 }
@@ -559,7 +594,7 @@ Object.keys(TONES).forEach(k=>{
   b.setAttribute('aria-pressed',k===tone);
   b.onclick=()=>{tone=k; try{localStorage.setItem('unari-tone',k);}catch(e){}
     Object.keys(TONES).forEach(j=>$('tone-'+j).setAttribute('aria-pressed',j===tone));
-    refreshAudio();};
+    refreshAudio(); updateSummary();};
   $('tones').appendChild(b);
 });
 $('play').onclick=()=>playing?stopAudio():startAudio();
@@ -580,7 +615,7 @@ $('slider').addEventListener('input',e=>setOffset(parseFloat(e.target.value)));
 
 function noteLabel(){
   const f=freqs(0);
-  const hz=`${ref.n} ${ref.f.toFixed(1)} Hz`, rt=`${cur.p}:${cur.q}`;
+  const hz=`${ref.n} ${ref.f.toFixed(1)} Hz`, rt=ratioText();
   return mode==='upper'
     ? tr(`基準音(下)${hz}・上の音を動かす・比 ${rt}`,`Reference (lower) ${hz} · moving the upper note · ratio ${rt}`)
     : tr(`基準音(上)${hz}・下の音を動かす・比 ${rt}`,`Reference (upper) ${hz} · moving the lower note · ratio ${rt}`);
@@ -604,9 +639,6 @@ function showQName(){
 function labelPick(){
   $('ivLabel').textContent=pick==='fixed'?tr('音程を選ぶ','Choose an interval')
     :tr('出題中の音程(目盛りを押すと「選んだ音程」に戻ります)','Current interval (tap a tick to go back to “Chosen interval”)');
-  $('pickNote').textContent=pick==='fixed'?tr('下の目盛りで選んだ音程を出題します。','Uses the interval you choose on the scale below.')
-    :pick==='random'?tr('12種類の音程から均等に選んで出題します。','Picks evenly from the 12 intervals.')
-    :tr('音程別の成績をもとに、誤差の大きい音程やまだ解いていない音程を多めに出題します。','Based on your results by interval, picks intervals with larger errors, and ones you have not tried yet, more often.');
 }
 PICKS.forEach(p=>{ $('pick-'+p).onclick=()=>{ if(p===pick) return; setPick(p); if(p!=='fixed') newQuestion(); }; });
 // 音程を重み付きで選ぶ。直前と同じ音程は出にくくする
@@ -631,6 +663,7 @@ function newQuestion(reroll=true){
   updateIvSlider();
   [0,1,2].forEach(k=>$('oct-'+k).setAttribute('aria-pressed',k===oct));
   ['upper','lower'].forEach(m=>$('mode-'+m).setAttribute('aria-pressed',m===mode));
+  TUNS.forEach(t=>$('tun-'+t).setAttribute('aria-pressed',t===tun));
   $('knobLabel').textContent=mode==='upper'?tr('上の音を調整','Adjust the upper note'):tr('下の音を調整','Adjust the lower note');
   $('qname').textContent=cur.full; showQName();
   $('qmeta').textContent=noteLabel();
@@ -650,6 +683,12 @@ $('retry').onclick=beginAttempt;
 
 function verdictOf(e){
   const a=Math.abs(e);
+  if(tun!=='just'){
+    if(a<1) return tr('ぴったり','Spot on');
+    if(a<3) return tr('かなり良い','Very good');
+    if(a<6) return tr('まずまず。唸りの速さが少し違います','Not bad. The beat rate is a little off');
+    return tr('もう一歩。唸りの速さがまだ違います','Almost. The beat rate is still off');
+  }
   if(a<1) return tr('ぴったり。唸りは消えています','Spot on. The beating is gone');
   if(a<3) return tr('かなり良い。ほぼ純正です','Very good. Almost just');
   if(a<6) return tr('まずまず。ゆっくりした唸りが残っています','Not bad. A slow beat remains');
@@ -660,7 +699,7 @@ $('submit').onclick=()=>{
   const err=offset-target();
   showResult();
   $('result').hidden=false;
-  saveHist({iv:cur.name,id:baseIv.id,oct,mode,ref:ref.n,err:+err.toFixed(1),t:Date.now()});
+  saveHist({iv:cur.name,id:baseIv.id,oct,mode,tun,ref:ref.n,err:+err.toFixed(1),t:Date.now()});
   if(!scored){ scored=true; addStat(baseIv,err); }
 };
 // 決定した結果の表示(言語を切り替えたときもここで書き直す)
@@ -668,9 +707,12 @@ function showResult(){
   const err=mine-target();
   $('verdict').innerHTML=`${verdictOf(err)}<span class="err">${err>0?'+':''}${err.toFixed(1)} cent</span>`;
   drawRuler();
-  const t=target(), pt=pythTarget(), at=Math.abs(t).toFixed(1), apt=Math.abs(pt).toFixed(1), d=Math.abs(pt-t).toFixed(1);
+  const t=justTarget(), pt=pythTarget(), at=Math.abs(t).toFixed(1), apt=Math.abs(pt).toFixed(1), d=Math.abs(pt-t).toFixed(1);
   const which=mode==='upper'?tr('上の音','the upper note'):tr('下の音','the lower note');
-  $('explain').textContent = (Math.abs(t)<0.1
+  // ピタゴラス・平均律が目標のときは、目標の位置で残る唸りの速さを先に示す
+  const bt=beatHz(target()), bts=bt<0.05?'0':bt.toFixed(1);
+  const lead=tun==='just'?'':tr(`目標は${tunName()}の位置で、唸りは約 ${bts} 回/秒残ります。`,`The target is the ${tunName()} position, where about ${bts} beats per second remain. `);
+  $('explain').textContent = lead + (Math.abs(t)<0.1
     ? tr(`${cur.name}は純正と平均律が一致します。`,`For the ${cur.name}, just and equal temperament coincide.`)
     : tr(`${cur.name}の純正(${cur.p}:${cur.q})を作るには、${which}を平均律より ${at} セント${t<0?'低く':'高く'}取ります。「平均律で聴く」と比べると、平均律側に唸りが残っているのが分かります。`,
          `To make a just ${cur.name} (${cur.p}:${cur.q}), tune ${which} ${at} cents ${t<0?'lower':'higher'} than equal temperament. Compare with “Hear equal” and you will hear the beating that remains in equal temperament.`))
@@ -709,7 +751,7 @@ function drawRuler(){
 }
 
 /* ---------- Hint: beat envelope ---------- */
-function beatHz(){const f=freqs(); return Math.abs(cur.q*f.U-cur.p*f.L);}
+function beatHz(o){const f=freqs(o); return Math.abs(cur.q*f.U-cur.p*f.L);}
 function updateBeat(){
   const b=beatHz();
   const bs=b<0.05?'0.0':b.toFixed(2);
@@ -717,7 +759,8 @@ function updateBeat(){
     ? (voice==='ref'?tr('基準音だけを鳴らしています(唸りはありません)','Playing only the reference note (no beating)')
                     :tr('動かす音だけを鳴らしています(唸りはありません)','Playing only the moving note (no beating)'))
     : tr(`唸りの速さ 約 ${bs} 回/秒(下の音の${cur.p}倍音と上の音の${cur.q}倍音の干渉)`,
-         `Beat rate ≈ ${bs} per second (interference between harmonic ${cur.p} of the lower note and harmonic ${cur.q} of the upper note)`);
+         `Beat rate ≈ ${bs} per second (interference between harmonic ${cur.p} of the lower note and harmonic ${cur.q} of the upper note)`)
+      + (tun==='just'?'':tr(`。${tunName()}では約 ${beatHz(target()).toFixed(2)} 回/秒`,`. In ${tunName()}: ≈ ${beatHz(target()).toFixed(2)} per second`));
 }
 $('hint').onchange=e=>{$('hintArea').hidden=!e.target.checked; if(e.target.checked) loop();};
 const cv=$('cv'), g2=cv.getContext('2d');
@@ -752,7 +795,7 @@ function renderHist(){
   // 音程名は id と oct から今の言語で作る(id のない古い記録は保存した名前のまま)
   const nm=r=>{ const iv=INTERVALS.find(v=>v.id===r.id); return iv?derive(iv,r.oct||0).name:r.iv; };
   el.innerHTML=`<div><span>${tr(`直近${hist.length}回の平均誤差`,`Average error, last ${hist.length}`)}</span><span>${avg.toFixed(1)} cent</span></div>`+
-    hist.map(r=>`<div><span>${nm(r)}${r.mode==='lower'?tr('・下を動かす',' · moving lower'):tr('・上を動かす',' · moving upper')}${tr(`(${r.ref||r.base})`,` (${r.ref||r.base})`)}</span><span>${r.err>0?'+':''}${r.err.toFixed(1)}</span></div>`).join('');
+    hist.map(r=>`<div><span>${nm(r)}${r.tun&&r.tun!=='just'?tr('・',' · ')+tunName(r.tun):''}${r.mode==='lower'?tr('・下を動かす',' · moving lower'):tr('・上を動かす',' · moving upper')}${tr(`(${r.ref||r.base})`,` (${r.ref||r.base})`)}</span><span>${r.err>0?'+':''}${r.err.toFixed(1)}</span></div>`).join('');
 }
 
 /* ---------- 音程別の成績(苦手を重点で使う) ----------
@@ -760,18 +803,22 @@ function renderHist(){
 const STATS_KEY='unari-stats';
 let stats={};
 try{stats=JSON.parse(localStorage.getItem(STATS_KEY)||'{}')||{};}catch(e){stats={};}
+// 目標の音律ごとに分けて持つ(純正は以前からの記録と同じ m2〜P8 の名前のまま)
+const statKey=iv=>tun==='just'?iv.id:`${tun}:${iv.id}`;
 function addStat(iv,err){
-  const a=Math.abs(err), s=stats[iv.id];
-  stats[iv.id]=s&&s.n?{n:s.n+1, e:+(0.7*s.e+0.3*a).toFixed(2)}:{n:1, e:+a.toFixed(2)};
+  const a=Math.abs(err), s=stats[statKey(iv)];
+  stats[statKey(iv)]=s&&s.n?{n:s.n+1, e:+(0.7*s.e+0.3*a).toFixed(2)}:{n:1, e:+a.toFixed(2)};
   try{localStorage.setItem(STATS_KEY,JSON.stringify(stats));}catch(e){}
   renderStats();
 }
 // 誤差 1 cent → 約0.8、6 cent → 2.5、15 cent 以上 → 5.5。未回答は 3(誤差 7.5 cent 相当)
-function weakWeight(iv){ const s=stats[iv.id]; return s&&s.n?0.5+Math.min(s.e,15)/3:3; }
+function weakWeight(iv){ const s=stats[statKey(iv)]; return s&&s.n?0.5+Math.min(s.e,15)/3:3; }
 function renderStats(){
+  $('statsTun').hidden=tun==='just';
+  $('statsTun').textContent=tr(`目標の音律が「${tunName()}」のときの成績です(純正とは別に記録します)。`,`Results with ${tunName()} as the target (kept separately from just).`);
   const tot=INTERVALS.reduce((a,iv)=>a+weakWeight(iv),0);
   $('stats').innerHTML=INTERVALS.map(iv=>{
-    const s=stats[iv.id], pr=weakWeight(iv)/tot*100;
+    const s=stats[statKey(iv)], pr=weakWeight(iv)/tot*100;
     return `<tr${iv===baseIv&&pick!=='fixed'?' style="font-weight:700"':''}><td>${tr(`${iv.name}(${iv.id})`,`${iv.nameE} (${iv.id})`)}</td><td class="n">${s?s.n:'—'}</td><td class="n">${s?s.e.toFixed(1)+' cent':'—'}</td><td class="n">${pr.toFixed(0)}%</td></tr>`;
   }).join('');
 }
@@ -812,7 +859,7 @@ const dlg=$('settingsDlg');
 // 設定ボタンの横に、隠れている設定の今の値を出す
 function updateSummary(){
   // 項目の途中では改行しない(スマホでは「・」の位置で折り返す)
-  $('setSum').innerHTML=[`A4=${A4}`, $('oct-'+oct).textContent, mode==='upper'?tr('上を動かす','Move upper'):tr('下を動かす','Move lower')]
+  $('setSum').innerHTML=[`A4=${A4}`, $('oct-'+oct).textContent, tr(TONES[tone].label,TONES[tone].labelE)]
     .map(t=>`<span>${t}</span>`).join(tr('・',' · '));
 }
 $('openSettings').onclick=()=>{ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); };
