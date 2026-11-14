@@ -229,6 +229,7 @@ header a{color:var(--brass)}
 .score svg{display:block;color:var(--ink)}
 .score .col{fill:transparent;cursor:pointer}
 .score .col.cur{fill:var(--brass-soft)}
+.score .mark{fill:var(--brass)}
 .score .me{color:var(--brass)}
 @media (max-width:420px){.modes button{font-size:13px}}
 /* ハモリ: 旋律と自分のパートを2段で表示 */
@@ -1143,6 +1144,9 @@ function voiceHz(o){
 }
 /* 楽譜: 大譜表(上=ソプラノ・アルト、下=テノール・バス)。拍ごとの和音を、長さに応じた4分・2分・付点2分・全音符で描く。
    譜表上の位置 dia = オクターヴ×7+音名。ト音記号の第5線は F5(38)、ヘ音記号の第5線は A3(26) */
+/* 音部記号の形: Bravura(Steinberg, SIL Open Font License 1.1)の字形を、五線の間隔=1 の大きさで写したもの。
+   ト音記号は第2線(ソ)、ヘ音記号は第4線(ファ)が原点。文字で描くとブラウザのフォントによって大きさが変わるため */
+const G_CLEF='M1.5 -1.66C1.5 -1.71 1.5 -1.71 1.53 -1.74C1.59 -1.8 1.68 -1.88 1.75 -1.96C2.09 -2.33 2.29 -2.81 2.29 -3.26C2.29 -3.61 2.19 -3.95 2.03 -4.19C1.97 -4.28 1.86 -4.39 1.82 -4.39C1.76 -4.39 1.64 -4.29 1.56 -4.2C1.26 -3.87 1.17 -3.37 1.17 -2.96C1.17 -2.72 1.2 -2.46 1.22 -2.3C1.23 -2.25 1.24 -2.24 1.19 -2.2C0.93 -1.99 0.66 -1.75 0.45 -1.49C0.17 -1.15 0 -0.78 0 -0.35C0 0.35 0.48 1.01 1.46 1.01C1.55 1.01 1.65 1 1.73 0.98C1.78 0.98 1.78 0.97 1.79 1.02C1.84 1.29 1.9 1.64 1.9 1.82C1.9 2.42 1.5 2.49 1.26 2.49C1.05 2.49 0.94 2.42 0.94 2.37C0.94 2.34 0.98 2.33 1.07 2.3C1.2 2.27 1.34 2.16 1.34 1.93C1.34 1.71 1.2 1.52 0.96 1.52C0.69 1.52 0.53 1.73 0.53 1.98C0.53 2.24 0.68 2.63 1.29 2.63C1.56 2.63 2.08 2.51 2.08 1.83C2.08 1.6 2 1.22 1.96 0.98C1.95 0.93 1.96 0.93 2.01 0.91C2.42 0.75 2.68 0.41 2.68 -0.04C2.68 -0.56 2.31 -1.01 1.72 -1.01C1.62 -1.01 1.62 -1.01 1.6 -1.08ZM1.88 -3.77C2.01 -3.77 2.12 -3.66 2.12 -3.44C2.12 -3.17 1.99 -2.91 1.68 -2.6C1.61 -2.54 1.52 -2.44 1.42 -2.36C1.4 -2.34 1.38 -2.34 1.37 -2.4C1.36 -2.5 1.35 -2.64 1.35 -2.76C1.35 -3.39 1.64 -3.77 1.88 -3.77ZM1.44 -1.05C1.46 -0.97 1.46 -0.98 1.38 -0.95C1.03 -0.83 0.8 -0.52 0.8 -0.18C0.8 0.18 0.99 0.44 1.26 0.53C1.3 0.54 1.34 0.56 1.37 0.56C1.4 0.56 1.42 0.54 1.42 0.51C1.42 0.48 1.39 0.47 1.36 0.46C1.19 0.39 1.07 0.22 1.07 0.03C1.07 -0.2 1.23 -0.37 1.47 -0.44C1.54 -0.45 1.54 -0.45 1.55 -0.4L1.75 0.79C1.76 0.83 1.76 0.83 1.7 0.84C1.63 0.86 1.55 0.86 1.47 0.86C0.77 0.86 0.32 0.48 0.32 -0.08C0.32 -0.32 0.36 -0.63 0.69 -1.01C0.93 -1.28 1.12 -1.42 1.3 -1.58C1.34 -1.61 1.35 -1.6 1.36 -1.56ZM1.72 -0.41C1.71 -0.46 1.72 -0.47 1.76 -0.47C2.09 -0.44 2.36 -0.17 2.36 0.18C2.36 0.44 2.2 0.64 1.98 0.75C1.93 0.78 1.92 0.78 1.92 0.73Z', F_CLEF='M1.01 -1.05C0.31 -1.05 0 -0.54 0 -0.16C0 0.16 0.17 0.44 0.49 0.44C0.74 0.44 0.92 0.26 0.92 0.02C0.92 -0.24 0.73 -0.4 0.53 -0.4C0.42 -0.4 0.38 -0.37 0.33 -0.37C0.28 -0.37 0.27 -0.4 0.27 -0.44C0.27 -0.6 0.51 -0.9 0.92 -0.9C1.34 -0.9 1.52 -0.48 1.52 0.15C1.52 0.56 1.44 1.04 1.19 1.42C0.95 1.8 0.54 2.14 0.04 2.42C0 2.44 -0.02 2.46 -0.02 2.49C-0.02 2.52 -0 2.54 0.03 2.54C0.05 2.54 0.08 2.53 0.1 2.52C0.63 2.26 1.14 1.96 1.57 1.5C1.92 1.12 2.12 0.64 2.12 0.11C2.12 -0.58 1.7 -1.05 1.01 -1.05ZM2.52 -0.72C2.39 -0.72 2.3 -0.62 2.3 -0.5C2.3 -0.38 2.39 -0.28 2.52 -0.28C2.64 -0.28 2.74 -0.38 2.74 -0.5C2.74 -0.62 2.64 -0.72 2.52 -0.72ZM2.52 0.28C2.4 0.28 2.3 0.38 2.3 0.5C2.3 0.62 2.4 0.72 2.52 0.72C2.64 0.72 2.74 0.62 2.74 0.5C2.74 0.38 2.64 0.28 2.52 0.28Z';
 function renderScore(){
   const box=$('score'), c=harm.ch;
   if(S.mode!=='harm'||!c){ box.innerHTML=''; return; }
@@ -1152,8 +1156,8 @@ function renderScore(){
   const keyAlt=l=>c.ks>0?(SH.slice(0,c.ks).includes(l)?1:0):c.ks<0?(FL.slice(0,-c.ks).includes(l)?-1:0):0;
   let o='', x=8;
   const lines=y0=>{ let t=''; for(let i=0;i<5;i++) t+=`<line x1="0" x2="WIDTH" y1="${y0+i*G}" y2="${y0+i*G}" stroke="var(--muted)" stroke-width=".8"/>`; return t; };
-  const head=`<text x="4" y="${T0+27}" font-size="34" fill="currentColor">𝄞</text><text x="4" y="${B0+20}" font-size="27" fill="currentColor">𝄢</text>`;
-  x=34;
+  const head=`<path d="${G_CLEF}" transform="translate(6 ${T0+3*G}) scale(${G})" fill="currentColor"/><path d="${F_CLEF}" transform="translate(6 ${B0+G}) scale(${G})" fill="currentColor"/>`;
+  x=38;
   // 調号
   let ksig='';
   const kd=c.ks>0?[[38,35,39,36,33,37,34],'♯']:[[34,37,33,36,32,35,31],'♭'];
@@ -1162,12 +1166,18 @@ function renderScore(){
   const ts=(y0)=>`<text x="${x}" y="${y0+13}" font-size="14" font-weight="700" fill="currentColor">${c.meter}</text><text x="${x}" y="${y0+27}" font-size="14" font-weight="700" fill="currentColor">4</text>`;
   ksig+=ts(T0)+ts(B0); x+=20;
   // 音符
-  const prev=[null,null,null,null]; let acc=[{},{}];
+  const prev=[null,null,null,null]; let acc=[{},{}], bg='';
+  // 楽句(フェルマータまで)ごとの始まりの位置。スクロールは楽句の区切りで行う
+  const phX=[]; let phStart=0;
   c.steps.forEach((_,k)=>{
     const st=chStep(c,k), w=24+8*Math.min(st.d,4);
     if(st.bar){ o+=`<line x1="${x-2}" x2="${x-2}" y1="${T0}" y2="${B0+4*G}" stroke="var(--muted)"/>`; x+=6; acc=[{},{}]; }
     const cx=x+12;
-    o+=`<rect class="col${k===harm.i?' cur':''}" data-k="${k}" x="${x-1}" y="4" width="${w-2}" height="${H-8}" rx="4"/>`;
+    if(k>0&&chStep(c,k-1).ferm) phStart=x-8;
+    phX[k]=[phStart,x,x+w,st.ferm];
+    // 今の拍は、五線を隠さないよう帯を五線の下に敷き、上下の端に印をつける
+    bg+=`<rect class="col${k===harm.i?' cur':''}" data-k="${k}" x="${x-1}" y="4" width="${w-2}" height="${H-8}" rx="4"/>`;
+    if(k===harm.i) o+=`<path class="mark" d="M${x+w/2-6} 4h12l-6 7z"/><path class="mark" d="M${x+w/2-6} ${H-4}h12l-6 -7z"/>`;
     st.v.forEach((v,j)=>{
       const staff=j<2?0:1, up=j%2===0, y=yOf(staff,v.dia), col=j===me?' class="me"':'';
       // 同じ譜表の2声が2度でぶつかるときは、上の声部の符頭を右へずらす
@@ -1196,9 +1206,20 @@ function renderScore(){
   });
   o+=`<line x1="${x}" x2="${x}" y1="${T0}" y2="${B0+4*G}" stroke="var(--muted)"/><line x1="${x+4}" x2="${x+4}" y1="${T0}" y2="${B0+4*G}" stroke="currentColor" stroke-width="3"/>`;
   const W=x+12;
-  box.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${tr('楽譜','Score')}">${(lines(T0)+lines(B0)).replace(/WIDTH/g,W)}<line x1="1" x2="1" y1="${T0}" y2="${B0+4*G}" stroke="currentColor"/>${head}${ksig}${o}</svg>`;
-  const cur=box.querySelector('.col.cur');
-  if(cur){ const cx=+cur.getAttribute('x'); box.scrollLeft=Math.max(0,cx-box.clientWidth/2+20); }
+  box.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${tr('楽譜','Score')}">${bg}${(lines(T0)+lines(B0)).replace(/WIDTH/g,W)}<line x1="1" x2="1" y1="${T0}" y2="${B0+4*G}" stroke="currentColor"/>${head}${ksig}${o}</svg>`;
+  /* 今の拍が画面に見えていて、画面の中の一番右のフェルマータまでの間は動かさない。
+     それを過ぎたら、今の楽句の頭を左端に合わせる。楽句が画面に収まらないときは、今の拍が右端に届いたところで次の画面へ送る */
+  const ph=phX[harm.i];
+  if(ph){
+    const [p0,cx0,cx1]=ph, sl=box.scrollLeft, vw=box.clientWidth, seen=k=>phX[k][1]>=sl&&phX[k][2]<=sl+vw;
+    let lastF=-1; phX.forEach((q,k)=>{ if(q[3]&&seen(k)) lastF=k; });
+    let left=p0;
+    if(box.dataset.done&&seen(harm.i)&&(lastF<0||harm.i<=lastF)) left=sl;
+    else if(cx1>p0+vw) left=sl>=p0&&cx1<=sl+vw?sl:cx0-30;
+    left=Math.max(0,Math.min(left,W-vw));
+    if(Math.abs(left-sl)>1) box.scrollTo({left,behavior:box.dataset.done?'smooth':'auto'});
+    box.dataset.done=1;
+  }
 }
 // 楽譜の拍を押すと、その拍から練習する
 $('score').addEventListener('click',e=>{ const r=e.target.closest('.col'); if(!r||!harm.ch) return; harm.i=+r.dataset.k; resetHold(); setHarmStep(); });
