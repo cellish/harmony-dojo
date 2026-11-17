@@ -98,6 +98,9 @@ button:disabled{opacity:.45;cursor:default}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .status{font-size:13px;color:var(--muted)}
 .status.err{color:var(--bad)}
+.status.warn{color:var(--ink);font-weight:500}
+.settings .micdev{grid-column:span 2}
+@media (max-width:480px){.settings .micdev{grid-column:1/-1}}
 .target{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .sol{font-family:var(--display);font-weight:800;font-size:72px;line-height:1}
 .sol.free{color:var(--muted)}
@@ -324,7 +327,9 @@ header a{color:var(--brass)}
         <div class="settings">
           <div class="field"><label class="label" for="source" data-en="Source">音源</label>
             <select id="source"><option value="voice" data-en="Voice">声</option><option value="cello" data-en="Cello">チェロ</option><option value="violin" data-en="Violin">ヴァイオリン</option></select></div>
+          <div class="field micdev"><label class="label" for="micDev" data-en="Microphone">マイク</label><select id="micDev"></select></div>
         </div>
+        <p class="note" id="micNote" style="margin-top:8px"></p>
         <label class="check"><input type="checkbox" id="speaker"> <span data-en="Play through speakers (use echo cancellation)">スピーカーで鳴らす(エコー除去を使う)</span></label>
       </fieldset>
 
@@ -547,7 +552,7 @@ const HARM_OFF={d3:-2,u3:2,d6:-5};
 const HARM_NAME={d3:['3度下','3rd below'],u3:['3度上','3rd above'],d6:['6度下','6th below']};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3', part:'lo', harmKind:'iv', duet:'canon', chorale:'bwv269', chPart:'A'};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3', part:'lo', harmKind:'iv', duet:'canon', chorale:'bwv269', chPart:'A', micDev:''};
 const DEF={...S};
 try{const sv=JSON.parse(localStorage.getItem('drone-settings')||'{}'); Object.assign(S,sv);
   // 古い版は音量を倍率のまま保存していた(vol)。つまみの位置に直す
@@ -865,8 +870,14 @@ async function startMic(){
     if(micStream) micStream.getTracks().forEach(t=>t.stop());
     if(micSrc) micSrc.disconnect();
     setAudioSession('play-and-record');
-    micStream=await navigator.mediaDevices.getUserMedia({audio:{
-      echoCancellation:!!S.speaker, noiseSuppression:false, autoGainControl:false, channelCount:1}});
+    const base={echoCancellation:!!S.speaker, noiseSuppression:false, autoGainControl:false, channelCount:1};
+    let fellBack=false; micStream=null;
+    // 選んだマイクで開く。外した・名前が変わったなどで開けなければ、自動(ブラウザの既定)で開き直す
+    if(S.micDev){
+      try{ micStream=await navigator.mediaDevices.getUserMedia({audio:{...base, deviceId:{exact:S.micDev}}}); }
+      catch(e){ if(e&&(e.name==='NotAllowedError'||e.name==='SecurityError')) throw e; fellBack=true; }
+    }
+    if(!micStream) micStream=await navigator.mediaDevices.getUserMedia({audio:base});
     micSrc=ctx.createMediaStreamSource(micStream);
     hpF=ctx.createBiquadFilter(); hpF.type='highpass'; hpF.Q.value=0.7;
     lpF=ctx.createBiquadFilter(); lpF.type='lowpass'; lpF.Q.value=0.7;
@@ -874,9 +885,15 @@ async function startMic(){
     micSrc.connect(hpF).connect(lpF).connect(analyser);
     applyProfile();
     micOn=true; labelMicBtn();
-    if(S.speaker) setStatus('マイクを使っています(エコー除去あり)。声が途切れやすいときはヘッドホンに切り替えてください。',
+    const trk=micStream.getAudioTracks()[0];
+    if(isBtMic(trk)) setStatus(
+      `⚠ Bluetooth のマイク${trk.label?`(${trk.label})`:''}を使っています。音質が落ち、音程の表示が不安定になりやすいので、音はイヤホン、マイクは本体のものがおすすめです(設定の「マイク」で選べます)。`,
+      `⚠ Using a Bluetooth microphone${trk.label?` (${trk.label})`:''}. Its sound quality is reduced and the pitch reading tends to be unstable; we recommend earphones for sound and the built-in microphone for input (choose it under “Microphone” in Settings).`,'warn');
+    else if(fellBack) setStatus('選んだマイクが見つからないため、自動で選んだマイクを使っています。','The selected microphone was not found, so the default microphone is being used.','warn');
+    else if(S.speaker) setStatus('マイクを使っています(エコー除去あり)。声が途切れやすいときはヘッドホンに切り替えてください。',
       'Microphone on (echo cancellation enabled). If your voice keeps cutting out, switch to headphones.');
     else setStatus('マイクを使っています。指定の音を伸ばして歌ってください。','Microphone on. Sing and sustain the note shown.');
+    refreshMicDevs();
     if(!loopRunning){ loopRunning=true; requestAnimationFrame(loop); }
     keepAwake(true);
   }catch(e){
@@ -892,17 +909,57 @@ function stopMic(){
   resetHold();
   labelMicBtn();
   setStatus('マイクを止めました。「練習を始める」か「マイク」で再開できます。','Microphone stopped. Press “Start practice” or “Mic” to resume.');
+  renderMicNote();
   setAudioSession('playback');
   if(!droneOn) keepAwake(false);
 }
 $('micBtn').onclick=()=>micOn?stopMic():startMic();
+
+/* ---------- マイク機器の選択 ----------
+   機器の名前は、マイクを一度許可するまでブラウザが教えてくれない。そのため、マイク開始のあとと、
+   機器の抜き差し(devicechange)のときに一覧を作り直す。「既定」「通話用」の仮の項目は「自動」にまとめる */
+async function refreshMicDevs(){
+  const sel=$('micDev');
+  let list=[];
+  try{ if(navigator.mediaDevices&&navigator.mediaDevices.enumerateDevices)
+    list=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput'&&d.deviceId&&d.deviceId!=='default'&&d.deviceId!=='communications'); }catch(e){}
+  sel.innerHTML='';
+  const add=(v,t)=>{const o=document.createElement('option'); o.value=v; o.textContent=t; sel.appendChild(o);};
+  add('',tr('自動(ブラウザの既定)','Automatic (browser default)'));
+  list.forEach((d,i)=>add(d.deviceId, d.label||tr(`マイク ${i+1}`,`Microphone ${i+1}`)));
+  if(S.micDev&&!list.some(d=>d.deviceId===S.micDev)){ add(S.micDev,tr('前に選んだマイク(見つかりません)','Previously selected (not found)')); sel.lastChild.dataset.missing='1'; }
+  sel.value=S.micDev;
+  micDevLabeled=list.some(d=>d.label);
+  renderMicNote(); updateSummary();
+}
+let micDevLabeled=false;
+// 設定の一覧に出すマイク名(自動のときは出さない。長い名前は詰める)
+function micSummary(){
+  const sel=$('micDev'); if(!S.micDev||sel.selectedIndex<=0) return [];
+  const o=sel.options[sel.selectedIndex];
+  if(o.dataset.missing) return [tr('マイク未接続','Mic not found')];
+  const t=o.textContent; return [t.length>18?t.slice(0,17)+'…':t];
+}
+function renderMicNote(){
+  const trk=micStream&&micStream.getAudioTracks()[0];
+  $('micNote').textContent = micOn&&trk&&trk.label ? tr(`使用中: ${trk.label}`,`In use: ${trk.label}`)
+    : micDevLabeled ? '' : tr('機器の名前は、マイクを一度開始すると表示されます。','Device names appear after you start the microphone once.');
+}
+// Bluetooth のマイクか(名前、または 16kHz 以下の通話用の音質で判断する)
+function isBtMic(trk){
+  if(!trk) return false;
+  const st=trk.getSettings?trk.getSettings():{};
+  return /airpods|bluetooth|hands-?free|headset|buds|beats|ヘッドセット/i.test(trk.label||'') || (st.sampleRate>0&&st.sampleRate<=16000);
+}
+$('micDev').addEventListener('change',()=>{ S.micDev=$('micDev').value; saveSettings(); updateSummary(); if(micOn) startMic(); });
+if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange',refreshMicDevs);
 $('speaker').checked=!!S.speaker;
 $('speaker').onchange=e=>{ S.speaker=e.target.checked; saveSettings(); if(micOn) startMic(); };
 function labelMicBtn(){ const b=$('micBtn'); b.textContent=tr('マイク','Mic'); b.setAttribute('aria-pressed',micOn); labelStart(); }
 // 言語を切り替えたら書き直せるように、表示中のメッセージを両方の言語で覚えておく
 let statusMsg=null;
 function setStatus(ja,en,err){ statusMsg={ja,en,err}; renderStatus(); }
-function renderStatus(){ if(!statusMsg) return; const s=$('status'); s.textContent=tr(statusMsg.ja,statusMsg.en); s.classList.toggle('err',!!statusMsg.err); }
+function renderStatus(){ if(!statusMsg) return; const s=$('status'); s.textContent=tr(statusMsg.ja,statusMsg.en); s.classList.toggle('err',statusMsg.err===true); s.classList.toggle('warn',statusMsg.err==='warn'); }
 
 function detect(){
   analyser.getFloatTimeDomainData(buf);
@@ -1681,7 +1738,7 @@ const optText=id=>{const el=$(id), o=el.options[el.selectedIndex]; return !o?'':
 // 設定ボタンの横に、隠れている設定の今の値を1行で出す
 function updateSummary(){
   $('setSum').textContent=[`A4=${A4}`+(S.anchor==='tuned'?tr('(音律のA)',' (tuned A)'):''), optText('timbre'), optText('dronemode'), tr(`±${S.tol}セント`,`±${S.tol} cents`), tr(`${S.hold/1000}秒`,`${S.hold/1000} s`),
-    optText('source'), S.speaker?tr('スピーカー','Speakers'):tr('ヘッドホン','Headphones')].join(tr('・',' · '));
+    optText('source'), ...micSummary(), S.speaker?tr('スピーカー','Speakers'):tr('ヘッドホン','Headphones')].join(tr('・',' · '));
 }
 $('openSettings').onclick=()=>{ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); };
 $('closeSettings').onclick=()=>dlg.close?dlg.close():dlg.removeAttribute('open');
@@ -1699,7 +1756,7 @@ setStatus('ヘッドホンの使用をおすすめします。スピーカーか
   'Headphones are recommended. If the mic picks up the drone from speakers, the measurement gets disturbed.');
 // 言語を切り替えたら、JS で作った表示を書き直す
 onLang(()=>{
-  labelMicBtn(); labelDroneBtn(); renderStatus(); labelA4Presets(); updateSummary(); labelAnchor(); renderMarks();
+  labelMicBtn(); labelDroneBtn(); renderStatus(); labelA4Presets(); refreshMicDevs(); labelAnchor(); renderMarks();
   buildChordOpts(); buildPhraseOpts(); labelMode(); labelQuizBtns(); renderTuner();
   delete $('resetStats').dataset.confirm; labelResetStats(); $('resetMsg').textContent='';
   $('flash').textContent=''; showTarget(); buildLadder(); renderStats();
@@ -1708,6 +1765,7 @@ onLang(()=>{
 // テーマを切り替えたら、グラフを今の色で描き直す(マイク使用中は毎フレーム描くので不要)
 onTheme(()=>{ if(!micOn) drawTrace(performance.now()); });
 setA4(A4);
+refreshMicDevs();
 updateSummary(); drawZones(); resetSeq(); if(S.mode==='harm') startPhrase(); else restartTargets(); renderStats(); drawTrace(performance.now());
 </script>
 <script>
