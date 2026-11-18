@@ -247,6 +247,10 @@ header a{color:var(--brass)}
 .tips{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:14px}
 .tips b{color:var(--ink)}
 .mono{font-family:var(--mono)}
+
+/* 著作権表示(画面の一番下) */
+footer.legal{margin-top:8px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;line-height:1.7;color:var(--muted)}
+footer.legal p{margin:0}
 </style>
 </head>
 <body>
@@ -453,6 +457,11 @@ header a{color:var(--brass)}
         <b>楽器で使う</b>：チェロやヴァイオリンでは、設定の「音源」を楽器に切り替えてください。検出する音域と反応の速さが楽器向けになります。針が揺れて読みにくいときは、設定の「針の落ち着き」をゆっくりにしてください。マイクが使えないときは、アドレスバーのマイク許可を確認してください。</li>
     </ul>
   </details>
+  <footer class="legal">
+    <p data-en="© 2026 jun　All rights reserved.">© 2026 jun　All rights reserved.</p>
+    <p data-en="Clef glyphs in the score: Bravura (SIL OFL 1.1) · Fonts: Google Fonts (SIL OFL 1.1)">楽譜の音部記号: Bravura(SIL OFL 1.1)・フォント: Google Fonts(SIL OFL 1.1)</p>
+    <p data-en="The melodies included are either in the public domain or the author’s own work.">収録曲の旋律は、著作権の保護期間が終わったもの、または作者自身の作品です。</p>
+  </footer>
 </div>
 
 <script>

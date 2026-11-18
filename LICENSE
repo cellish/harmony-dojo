@@ -1,0 +1,29 @@
+Copyright (c) 2026 jun. All rights reserved.
+
+【日本語】
+
+ハモリ道場(Harmony Dojo)のソースコード、文章、および収録曲のデータ(旋律の選択・編曲・2声目の作成、
+コラールの拍ごとの和音への整理を含む)の著作権は jun にあります。
+
+- 公開しているサイト(https://cellish.github.io/harmony-dojo/)では、誰でも無料でこのアプリを使えます。
+  個人の練習のほか、授業やレッスンで使うことも自由です。
+- ソースコードは見られるように公開していますが、オープンソースではありません。
+  複製、改変、再配布、販売、およびこのアプリを元にした別のアプリやサービスの公開には、著作権者の許可が必要です。
+- アプリに同梱している他者の著作物(フォントの字形など)は、それぞれのライセンスに従います。
+  一覧は THIRD_PARTY_NOTICES.md を参照してください。
+- 収録している曲は、著作権の保護期間が終わったもの、または作者自身の作品です。曲ごとの状態は README.md を参照してください。
+
+【English】
+
+The source code, text, and the song data (including the choice of melodies, arrangements, added second parts,
+and the reduction of chorales to beat-by-beat chords) of Harmony Dojo are copyright jun.
+
+- Anyone may use this app free of charge on the published site (https://cellish.github.io/harmony-dojo/),
+  including for personal practice and in classes or lessons.
+- The source code is publicly viewable, but it is not open source.
+  Copying, modifying, redistributing or selling it, or publishing another app or service based on it,
+  requires permission from the copyright holder.
+- Third-party works bundled with the app (such as font glyphs) remain under their own licenses;
+  see THIRD_PARTY_NOTICES.md.
+- The pieces included in the app are either in the public domain or the author's own work;
+  see README.md for the status of each piece.

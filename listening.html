@@ -192,6 +192,10 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
 @media (prefers-reduced-motion:reduce){.ivtrack .knob,.ivtrack .fill{transition:none}}
 @media (max-width:480px){.nudges{grid-template-columns:repeat(4,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* 著作権表示(画面の一番下) */
+footer.legal{margin-top:8px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;line-height:1.7;color:var(--muted)}
+footer.legal p{margin:0}
 </style>
 <style>html,body{margin:0}</style>
 </head>
@@ -354,6 +358,10 @@ dialog#settingsDlg::backdrop{background:rgba(10,14,20,.45)}
     </table></div>
     <p class="note" style="margin-top:10px" data-en="A negative difference means the just interval sits lower than equal temperament. A major third tuned about 14 cents low makes the beating disappear, which is why choirs are told to sing major thirds “a little low”. The minor seventh is calculated as 9:5 (some use 16:9, which sits about 4 cents below equal temperament). For the tritone we use 7:5, where you can actually hear the beating disappear; the textbook 45:32 involves overtones too high to tune by beats. Pythagorean tuning is built by stacking only perfect fifths (3:2); its major 3rd, major 6th and major 7th are about 22 cents higher than just, and its minor 3rd and minor 6th about 22 cents lower. In melodies this gives a bright tension, with the leading tone pulled strongly toward the tonic, but stacked as chords it leaves beating. Adding octaves does not change how far the just and Pythagorean positions deviate.">差がマイナスなら、純正は平均律より低い位置にあります。長3度は約14セント低く取ると唸りが消えます。合唱で長3度を「少し低めに」と言われるのはこのためです。短7度は 9:5 で計算しています(16:9 とする流儀もあり、そちらは平均律より約4セント低い位置になります)。トライトーンは、唸りが実際に消える点として聴き取れる 7:5 を使っています。教科書的な 45:32 は倍音の重なりが高すぎて、唸りで合わせることができません。ピタゴラス音律は完全5度(3:2)だけを積み重ねて作る音律で、長3度・長6度・長7度は純正より約22セント高く、短3度・短6度は約22セント低くなります。旋律では導音が主音に強く引き寄せられる張りのある響きになる一方、和音として重ねると唸りが残ります。オクターヴを足しても、純正やピタゴラスの位置のずれ方は同じです。</p>
   </details>
+  <footer class="legal">
+    <p data-en="© 2026 jun　All rights reserved.">© 2026 jun　All rights reserved.</p>
+    <p data-en="Fonts: Google Fonts (SIL OFL 1.1)">フォント: Google Fonts(SIL OFL 1.1)</p>
+  </footer>
 </div>
 
 <script>
