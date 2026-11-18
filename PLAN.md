@@ -27,7 +27,7 @@ singing.html のピッチ検出(detect= YIN法、track= 中央値+オクター�
 - 適用は `S.speaker`(スピーカーで鳴らす)がオンのときだけ。伴奏・和音・目標が変わる場所(startDrone / 和音進行の前進 / setTarget / ハモリの歩進)から updateNotches() を呼ぶ。
 - 確認:`node tools/pitch-test.js notch` の表(メモ下部の基準値)と、実機でスピーカー+楽器の前後比較。
 
-### 3. 針の落ち着き(平均時間)の設定化(singing.html)
+### 3. 針の落ち着き(平均時間)の設定化(singing.html) — 実装済み(2026-11-18)
 
 - 設定画面「マイク入力」に「針の落ち着き」: 標準(今のまま)/ ゆっくり 0.5 秒 / とてもゆっくり 0.8 秒。`S.steady` に保存し、PROFILES の avg を上書き(標準=チェロ・ヴァイオリン 300ms、声なし。ゆっくり以降は声にも適用)。
 - updateSummary() の一覧にも出す。
