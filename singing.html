@@ -327,6 +327,8 @@ header a{color:var(--brass)}
         <div class="settings">
           <div class="field"><label class="label" for="source" data-en="Source">音源</label>
             <select id="source"><option value="voice" data-en="Voice">声</option><option value="cello" data-en="Cello">チェロ</option><option value="violin" data-en="Violin">ヴァイオリン</option></select></div>
+          <div class="field"><label class="label" for="steady" data-en="Needle smoothing">針の落ち着き</label>
+            <select id="steady"><option value="0" data-en="Standard">標準</option><option value="500" data-en="Slow (0.5 s)">ゆっくり(0.5秒)</option><option value="800" data-en="Very slow (0.8 s)">とてもゆっくり(0.8秒)</option></select></div>
           <div class="field micdev"><label class="label" for="micDev" data-en="Microphone">マイク</label><select id="micDev"></select></div>
         </div>
         <p class="note" id="micNote" style="margin-top:8px"></p>
@@ -447,8 +449,8 @@ header a{color:var(--brass)}
         <b>チューナー</b>：楽器を調に合わせるためのモードです。選んだ調と音律で、各音が平均律から何セントずれるかを表で示します。</li>
       <li data-en="<b>Grow your ear</b>: tune with your eyes closed and then check, rather than staring at the meter. Vibrato makes it hard to stay within the tolerance, so start with a straight tone.">
         <b>耳を育てる</b>：メーターを見続けるより、目を閉じて合わせてから確認するほうが耳が育ちます。ヴィブラートをかけると合格の幅に収まりにくいので、最初はノン・ヴィブラートで。</li>
-      <li data-en="<b>Instruments</b>: for cello or violin, switch “Source” in Settings; the detection range and response speed are adjusted. If the microphone does not work, check the permission in your browser’s address bar.">
-        <b>楽器で使う</b>：チェロやヴァイオリンでは、設定の「音源」を楽器に切り替えてください。検出する音域と反応の速さが楽器向けになります。マイクが使えないときは、アドレスバーのマイク許可を確認してください。</li>
+      <li data-en="<b>Instruments</b>: for cello or violin, switch “Source” in Settings; the detection range and response speed are adjusted. If the needle is too jumpy to read, set “Needle smoothing” to Slow in Settings. If the microphone does not work, check the permission in your browser’s address bar.">
+        <b>楽器で使う</b>：チェロやヴァイオリンでは、設定の「音源」を楽器に切り替えてください。検出する音域と反応の速さが楽器向けになります。針が揺れて読みにくいときは、設定の「針の落ち着き」をゆっくりにしてください。マイクが使えないときは、アドレスバーのマイク許可を確認してください。</li>
     </ul>
   </details>
 </div>
@@ -552,7 +554,7 @@ const HARM_OFF={d3:-2,u3:2,d6:-5};
 const HARM_NAME={d3:['3度下','3rd below'],u3:['3度上','3rd above'],d6:['6度下','6th below']};
 
 const $=id=>document.getElementById(id);
-const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3', part:'lo', harmKind:'iv', duet:'canon', chorale:'bwv269', chPart:'A', micDev:''};
+const S={key:0, reg:'high', set:'major', tuning:'just', tol:10, droneMode:'root', volPos:.85, mode:'quiz', auto:true, speaker:false, chime:true, order:'random', source:'voice', hold:1200, timbre:'organ', anchor:'et', chord:'none', prog:'none', phrase:'scale', harmIv:'d3', part:'lo', harmKind:'iv', duet:'canon', chorale:'bwv269', chPart:'A', micDev:'', steady:0};
 const DEF={...S};
 try{const sv=JSON.parse(localStorage.getItem('drone-settings')||'{}'); Object.assign(S,sv);
   // 古い版は音量を倍率のまま保存していた(vol)。つまみの位置に直す
@@ -574,7 +576,8 @@ const bind=(id,prop,conv=v=>v,after)=>{const el=$(id); el.value=S[prop];
   el.addEventListener('change',()=>{S[prop]=conv(el.value); saveSettings(); after&&after();});};
 bind('key','key',Number,()=>{buildChordOpts(); refreshDrone(); showTarget(); buildLadder(); labelAnchor(); renderTuner(); renderStats();});
 bind('reg','reg',v=>v,refreshDrone);
-bind('source','source',v=>v,()=>{ applyProfile(); });
+bind('source','source',v=>v,()=>{ applyProfile(); updateSummary(); });
+bind('steady','steady',Number,()=>{ applyProfile(); updateSummary(); });
 buildChordOpts(); buildPhraseOpts();
 bind('set','set',v=>v,()=>{buildChordOpts(); applyMode(); refreshDrone(); resetSeq(); restartTargets(); renderStats();});
 bind('chord','chord',v=>v,()=>{refreshDrone(); resetSeq(); restartTargets(); renderStats();});
@@ -853,9 +856,14 @@ const PROFILES={
   cello: {fmin:58, fmax:1400, hp:40,  lp:2500, win:.035, oct:3, jump:2, bridge:120, v0:.25, v1:.4, avg:300},
   violin:{fmin:180,fmax:2800, hp:140, lp:7000, win:.020, oct:3, jump:2, bridge:120, v0:.2,  v1:.35, avg:300},
 };
-let P=PROFILES[S.source]||PROFILES.voice;
+/* 針の落ち着き: 表示する高さを、直近の何ミリ秒の揺れの中心にするか。
+   標準は音源どおり(チェロ・ヴァイオリンは 0.3 秒、声は平均しない)。ゆっくりにするほど針は揺れにくく、
+   音を変えたときの追従は遅れる(平均の長さのおよそ半分) */
+function profileFor(){ const p=Object.assign({},PROFILES[S.source]||PROFILES.voice); if(S.steady>0) p.avg=S.steady; return p; }
+let P=profileFor();
 function applyProfile(){
-  P=PROFILES[S.source]||PROFILES.voice;
+  P=profileFor();
+  AV.length=0;   // 平均をやり直す
   if(!analyser) return;
   hpF.frequency.setValueAtTime(P.hp,ctx.currentTime); lpF.frequency.setValueAtTime(P.lp,ctx.currentTime);
   const sr=ctx.sampleRate, need=Math.round(sr*P.win)+Math.ceil(sr/P.fmin)+4;
@@ -1782,7 +1790,7 @@ const optText=id=>{const el=$(id), o=el.options[el.selectedIndex]; return !o?'':
 // 設定ボタンの横に、隠れている設定の今の値を1行で出す
 function updateSummary(){
   $('setSum').textContent=[`A4=${A4}`+(S.anchor==='tuned'?tr('(音律のA)',' (tuned A)'):''), optText('timbre'), optText('dronemode'), tr(`±${S.tol}セント`,`±${S.tol} cents`), tr(`${S.hold/1000}秒`,`${S.hold/1000} s`),
-    optText('source'), ...micSummary(), S.speaker?tr('スピーカー','Speakers'):tr('ヘッドホン','Headphones')].join(tr('・',' · '));
+    optText('source'), ...(S.steady>0?[tr('針','Needle')+' '+optText('steady')]:[]), ...micSummary(), S.speaker?tr('スピーカー','Speakers'):tr('ヘッドホン','Headphones')].join(tr('・',' · '));
 }
 $('openSettings').onclick=()=>{ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); };
 $('closeSettings').onclick=()=>dlg.close?dlg.close():dlg.removeAttribute('open');
