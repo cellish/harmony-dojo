@@ -330,7 +330,7 @@ header a{color:var(--brass)}
           <div class="field micdev"><label class="label" for="micDev" data-en="Microphone">マイク</label><select id="micDev"></select></div>
         </div>
         <p class="note" id="micNote" style="margin-top:8px"></p>
-        <label class="check"><input type="checkbox" id="speaker"> <span data-en="Play through speakers (use echo cancellation)">スピーカーで鳴らす(エコー除去を使う)</span></label>
+        <label class="check"><input type="checkbox" id="speaker"> <span data-en="Play through speakers (use echo cancellation and filter out the accompaniment)">スピーカーで鳴らす(エコー除去と、伴奏の音の除去を使う)</span></label>
       </fieldset>
 
       <h3 class="dlgsec" data-en="BOTH PAGES (Listen and Sing)">両ページ共通(「聴く」「歌う」)</h3>
@@ -783,14 +783,15 @@ $('startBtn').onclick=()=>{
 /* ハモリの旋律: ドローンが鳴っている間だけ、やわらかい音で伸ばし続ける。
    音が変わるときは一瞬音量を下げて、同じ高さが続くときも区切りが分かるようにする */
 const MEL_LEVEL=.16;
-let mel=null;
-function stopMel(){ if(mel){ const m=mel; mel=null; m.g.gain.setTargetAtTime(0,ctx.currentTime,.05); setTimeout(()=>{try{m.o.stop();}catch(e){} m.g.disconnect();},400); } }
+let mel=null, melHz=null;
+function stopMel(){ melHz=null; if(mel){ const m=mel; mel=null; m.g.gain.setTargetAtTime(0,ctx.currentTime,.05); setTimeout(()=>{try{m.o.stop();}catch(e){} m.g.disconnect();},400); } }
 function syncMelody(articulate){
   if(S.mode==='harm'&&harm.ch){ stopMel(); syncChoir(articulate); return; }
   stopChoir();
   const want=S.mode==='harm'&&droneOn&&harm.mel.length>0;
   if(!want){ stopMel(); return; }
   const f=tonicHz()*Math.pow(2,melodyCents(harm.play[harm.i])/1200), t=ctx.currentTime, lv=MEL_LEVEL*volGain();
+  melHz=f;
   if(!mel){
     const o=ctx.createOscillator(), g=ctx.createGain(); o.setPeriodicWave(softWave()); o.frequency.value=f;
     g.gain.value=0; o.connect(g).connect(out); o.start(); mel={o,g};
@@ -802,15 +803,16 @@ function syncMelody(articulate){
 }
 /* コラールの伴奏: 4つの声部をオルガンの音で鳴らし、あなたの声部だけ消す。
    前の拍から持続する声部は鳴らし直さず、和音が変わって高さが少し動くときもなめらかに合わせ直す */
-let choir=null;
-function stopChoir(){ if(!choir) return; const c=choir; choir=null; c.forEach(x=>{ x.g.gain.setTargetAtTime(0,ctx.currentTime,.05); setTimeout(()=>{try{x.o.stop();}catch(e){} x.g.disconnect();},400); }); }
+let choir=null, choirHz=[];
+function stopChoir(){ choirHz=[]; if(!choir) return; const c=choir; choir=null; c.forEach(x=>{ x.g.gain.setTargetAtTime(0,ctx.currentTime,.05); setTimeout(()=>{try{x.o.stop();}catch(e){} x.g.disconnect();},400); }); }
 function syncChoir(articulate){
   if(!(S.mode==='harm'&&droneOn&&harm.ch)){ stopChoir(); return; }
   const st=chStep(harm.ch,harm.i), tu=tuneStep(harm.ch,st), me=voiceIdx(), t=ctx.currentTime, lv=MEL_LEVEL*.75*volGain();
   if(!choir){ articulate=true; choir=[0,1,2,3].map(()=>{ const o=ctx.createOscillator(), g=ctx.createGain(); o.setPeriodicWave(organWave()); g.gain.value=0; o.connect(g).connect(out); o.start(); return {o,g}; }); }
+  choirHz=[];
   choir.forEach((x,k)=>{
     if(k===me){ x.g.gain.setTargetAtTime(0,t,.03); return; }
-    const f=voiceHz(tu.v[k]);
+    const f=voiceHz(tu.v[k]); choirHz.push(f);
     if(articulate&&!st.v[k].held){ x.g.gain.cancelScheduledValues(t); x.g.gain.setTargetAtTime(0,t,.015); x.o.frequency.setValueAtTime(f,t+.06); x.g.gain.setTargetAtTime(lv,t+.07,.03); }
     else { x.o.frequency.setTargetAtTime(f,t,.03); x.g.gain.setTargetAtTime(lv,t,.05); }
   });
@@ -882,7 +884,10 @@ async function startMic(){
     hpF=ctx.createBiquadFilter(); hpF.type='highpass'; hpF.Q.value=0.7;
     lpF=ctx.createBiquadFilter(); lpF.type='lowpass'; lpF.Q.value=0.7;
     analyser=ctx.createAnalyser(); analyser.smoothingTimeConstant=0;
-    micSrc.connect(hpF).connect(lpF).connect(analyser);
+    // スピーカーから戻ってくる伴奏の音を除くノッチ(使わない間は 5Hz に置いて素通しにする)
+    notchF=[]; let node=micSrc.connect(hpF);
+    for(let i=0;i<NOTCHES;i++){ const n=ctx.createBiquadFilter(); n.type='notch'; n.Q.value=25; n.frequency.value=5; node=node.connect(n); notchF.push(n); }
+    node.connect(lpF).connect(analyser); notchSig='';
     applyProfile();
     micOn=true; labelMicBtn();
     const trk=micStream.getAudioTracks()[0];
@@ -904,7 +909,7 @@ async function startMic(){
 function stopMic(){
   if(micStream) micStream.getTracks().forEach(t=>t.stop());
   if(micSrc) micSrc.disconnect();
-  micStream=null; micSrc=null; analyser=null; micOn=false;
+  micStream=null; micSrc=null; analyser=null; micOn=false; notchF=[]; notchSig=''; notchOn=0;
   voiced=false; lastRms=0; H.length=0; lastGood=null; pend=null; pendN=0;
   resetHold();
   labelMicBtn();
@@ -942,7 +947,8 @@ function micSummary(){
 }
 function renderMicNote(){
   const trk=micStream&&micStream.getAudioTracks()[0];
-  $('micNote').textContent = micOn&&trk&&trk.label ? tr(`使用中: ${trk.label}`,`In use: ${trk.label}`)
+  const nt=micOn&&notchOn?tr(`(伴奏の音 ${notchOn} 本を除いて測定中)`,` (filtering out ${notchOn} accompaniment tones)`):'';
+  $('micNote').textContent = micOn&&trk&&trk.label ? tr(`使用中: ${trk.label}`,`In use: ${trk.label}`)+nt
     : micDevLabeled ? '' : tr('機器の名前は、マイクを一度開始すると表示されます。','Device names appear after you start the microphone once.');
 }
 // Bluetooth のマイクか(名前、または 16kHz 以下の通話用の音質で判断する)
@@ -961,6 +967,43 @@ let statusMsg=null;
 function setStatus(ja,en,err){ statusMsg={ja,en,err}; renderStatus(); }
 function renderStatus(){ if(!statusMsg) return; const s=$('status'); s.textContent=tr(statusMsg.ja,statusMsg.en); s.classList.toggle('err',statusMsg.err===true); s.classList.toggle('warn',statusMsg.err==='warn'); }
 
+/* ---------- 伴奏の音を除く(スピーカーで鳴らすとき) ----------
+   アプリは伴奏の周波数を正確に知っているので、その基音と2・3倍音だけを狭いノッチで削ってから音程を測る。
+   エコー除去と違い、楽器や声の音はほとんど削らない(tools/pitch-test.js notch: 伴奏が楽器の2.5倍の音量で
+   混ざっても、混ざらないときと同じ精度に戻る)。
+   - 目標の音と同じ音名(どのオクターヴでも)から ±60 セント以内のノッチは外す。自分の音を削らないため
+   - 目標のない「自由に歌う」「チューナー」では使わない(どの音を出すか分からないので、自分の音を削りかねない)
+   - 毎フレーム「今削るべき周波数」を求め、変わったときだけフィルタを動かす */
+const NOTCHES=10;
+let notchF=[], notchSig='', notchOn=0;
+function notchTargets(){
+  if(!S.speaker||!target||!(S.mode==='quiz'||S.mode==='harm')) return [];
+  const fs=[];
+  if(droneOn&&!curChorale()){
+    const t=tonicHz();
+    if(S.timbre==='tanpura'&&!chordOn()){ fs.push(t,t/2); if(S.droneMode==='fifth') fs.push(t*.75); }
+    else droneVoices().forEach(v=>fs.push(v.f));
+  }
+  if(melHz) fs.push(melHz);
+  choirHz.forEach(f=>fs.push(f));
+  const tc=targetCents(target), t0=tonicHz(), out=[];
+  [1,2,3].forEach(k=>fs.slice().sort((a,b)=>a-b).forEach(f0=>{
+    const f=f0*k;
+    if(f<P.hp*1.2||f>P.lp*.9) return;
+    if(Math.abs(wrap(1200*Math.log2(f/t0)-tc))<60) return;                 // 目標と同じ音名は削らない
+    if(out.some(g=>Math.abs(1200*Math.log2(f/g))<15)) return;              // ほぼ同じ周波数は1本にまとめる
+    out.push(f);
+  }));
+  return out.slice(0,NOTCHES);                                              // 基音を優先(倍音は余ったぶんだけ)
+}
+function updateNotches(){
+  if(!notchF.length) return;
+  const fs=notchTargets(), sig=fs.map(f=>f.toFixed(1)).join(',');
+  if(sig===notchSig) return;
+  notchSig=sig; notchOn=fs.length;
+  notchF.forEach((n,i)=>n.frequency.setValueAtTime(i<fs.length?fs[i]:5,ctx.currentTime));
+  renderMicNote();
+}
 function detect(){
   analyser.getFloatTimeDomainData(buf);
   const sr=ctx.sampleRate, W=Math.round(sr*P.win);
@@ -1573,6 +1616,7 @@ function nearestDegree(cFromTonic){
 }
 function loop(){
   const now=performance.now();
+  if(micOn) updateNotches();
   const f=micOn?track(detect(),now):null; drawLevel();
   let dev=null;
   const voice=$('voice');
