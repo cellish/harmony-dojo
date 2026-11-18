@@ -20,7 +20,7 @@ singing.html のピッチ検出(detect= YIN法、track= 中央値+オクター�
 - 警告:開始後に `micStream.getAudioTracks()[0].getSettings()` と label を見て、`sampleRate<=16000` または label に AirPods / Bluetooth / Hands-Free / ヘッドセット系の語があれば、status に「Bluetooth マイクは音質が落ちます。音はイヤホン、マイクは本体がおすすめです」と出す(日英両方。setStatus(ja,en) 方式)。
 - 置き場所は「スピーカーで鳴らす」チェックの上。
 
-### 2. ドローン既知周波数のノッチ除去(singing.html)
+### 2. ドローン既知周波数のノッチ除去(singing.html) — 実装済み(2026-11-18)
 
 - `startMic` のフィルタ鎖 `micSrc→hpF→lpF→analyser` の hpF の後ろに、BiquadFilter(type 'notch'、Q≈25)を10本直列で常設。使わないノッチは周波数 5 Hz にしておく(hp 40〜140Hz より下なので実質素通し)。
 - `updateNotches()` を作り、今鳴っている伴奏(ドローン・和音・ハモリの旋律・コラールの3声)の各基本周波数とその2・3倍音のうち、lp カットオフ以下のものを周波数の低い順に割り当てる。**ただし現在の目標音の周波数から ±60 セント以内のノッチは外す**(主音を歌う・弾くときに自分の音を削らないため)。
