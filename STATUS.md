@@ -33,5 +33,5 @@ os:                  # 対応 / 一部制限 / 非対応 / 未確認
 ## OS / ブラウザ対応状況
 - macOS: Chrome 未確認 / Safari 未確認(「歌う」の判定は Mac Chrome と iPhone Safari の比較が確認待ち。音高判定のアルゴリズムは Node の `tools/pitch-test.js` で測定済み)
 - iOS / iPadOS: 未確認(マイク入力の機器選択は実機の確認待ち。iOS はしばらく使わない PWA の localStorage を消すことがある。PLAN 項目4)
-- Windows: Chrome / Edge 未確認
+- Windows: Chrome 未確認
 - Android: Chrome 未確認(インストール手順は README にある)
