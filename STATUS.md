@@ -25,3 +25,8 @@ updated: 2026-11-26
 - 音高判定(YIN): 独自実装
 - 楽譜の描画(SVG 手描き): 独自実装
 - Web Audio の土台(リバーブ・音色・`setAudioSession`・`keepAwake`): 独自実装(`audio.js` へ切り出し予定)
+## OS対応状況
+- macOS: 対応(Chrome で開発・確認。Safari は README に記載)
+- iOS / iPadOS: 一部未確認(「歌う」はマイク入力。入力機器の選択と Safari での判定は実機で確認待ち。iOS はしばらく使わない PWA の localStorage を消すことがある。PLAN 項目4)
+- Windows: 未確認
+- Android: 未確認(Chrome でのインストール手順は README にある)
