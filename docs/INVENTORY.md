@@ -33,7 +33,7 @@
 | `icons/` | — | apple-touch-icon, icon-192, icon-512, icon-maskable-512 |
 | `tools/extract_chorales.py` | 53 | music21 コーパスから `chorales.js` を作る |
 | `tools/pitch-test.js` | 168 | 音高判定の回帰テスト（合成音） |
-| `PLAN.md` | 64 | 改善計画（項目1〜3実装済み、4〜6未着手） |
+| `PLAN.md`・`STATUS.md` | 32(PLAN) | 未完了の作業（項目4〜6）、現状 |
 | `README.md` / `LICENSE` / `THIRD_PARTY_NOTICES.md` | — | 説明・著作権 |
 | `vendor/bravura/LICENSE.txt` | — | Bravura（SIL OFL）のライセンス文 |
 
