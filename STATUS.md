@@ -9,7 +9,7 @@ updated: 2026-11-26
 - 歌う(`singing.html`): 主音のドローンに合わせて歌い、ずれをセント単位で表示(YIN による音高判定)。楽譜は SVG 手描き
 - マイク入力の機器選択と Bluetooth マイクの警告、スピーカー使用時の伴奏のノッチ除去、針の落ち着き(平均の長さ)の設定
 - 日英2言語、PWA(オフライン可)、著作権表示(All rights reserved、LICENSE・THIRD_PARTY_NOTICES.md・各ページの footer)
-- 状態: main は `fc30ab3` 以降。origin より先で未 push(push は頼まれたときだけ)
+- 状態: main は origin と同期済み(2026-11-26 に push。push は頼まれたときだけ)
 
 ## 現在の検討事項（主要3件まで）
 - 書法コア: docs/INVENTORY.md の7章「作者のメモ」を作者が書いたあと、何を切り出すか決める
