@@ -3,6 +3,11 @@ app: ハモリ道場(Harmony Dojo)
 stage: 公開中          # 構想 / 試作 / 公開中 / 保守
 url: https://cellish.github.io/harmony-dojo/
 updated: 2026-11-26
+os:                  # 対応 / 一部制限 / 非対応 / 未確認
+  macos: 未確認
+  ios: 未確認        # iPadOS を含む
+  windows: 未確認
+  android: 未確認
 ---
 ## 実装済み（要約）
 - 聴く(`listening.html`): 2音を同時に鳴らし、唸りが消える純正音程を探す
@@ -25,8 +30,8 @@ updated: 2026-11-26
 - 音高判定(YIN): 独自実装
 - 楽譜の描画(SVG 手描き): 独自実装
 - Web Audio の土台(リバーブ・音色・`setAudioSession`・`keepAwake`): 独自実装(`audio.js` へ切り出し予定)
-## OS対応状況
-- macOS: 対応(Chrome で開発・確認。Safari は README に記載)
-- iOS / iPadOS: 一部未確認(「歌う」はマイク入力。入力機器の選択と Safari での判定は実機で確認待ち。iOS はしばらく使わない PWA の localStorage を消すことがある。PLAN 項目4)
-- Windows: 未確認
-- Android: 未確認(Chrome でのインストール手順は README にある)
+## OS / ブラウザ対応状況
+- macOS: Chrome 未確認 / Safari 未確認(「歌う」の判定は Mac Chrome と iPhone Safari の比較が確認待ち。音高判定のアルゴリズムは Node の `tools/pitch-test.js` で測定済み)
+- iOS / iPadOS: 未確認(マイク入力の機器選択は実機の確認待ち。iOS はしばらく使わない PWA の localStorage を消すことがある。PLAN 項目4)
+- Windows: Chrome / Edge 未確認
+- Android: Chrome 未確認(インストール手順は README にある)
